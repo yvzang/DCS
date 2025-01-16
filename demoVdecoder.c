@@ -1382,6 +1382,7 @@ void decoder_start(void** ppDecoder, const char* inputpath, lv_obj_t* img_domain
     pDecoder->thread.state = state;
     *ppDecoder = (void*)pDecoder;
     pthread_create(&thread_id, NULL, ChannelThread, (void*)(pDecoder));
+    pthread_detach(thread_id);
 }
 
 void decoder_stop(void* pDecoder, int* state){

@@ -817,7 +817,7 @@ void calculate_nothing(void* value, void* target){
 
 void ifmt_write_1(void* value, void* target){
     bool* pValue = reinterpret_cast<bool*>(value);
-    *pValue = true;
+    *pValue = 1;
     return;
 }
 
@@ -6408,8 +6408,8 @@ void MainWind::event_init_screen(){
     BoxValueItem item = {
         .target = this,
         .address = "D160",
-        .reg_type = REG_TYPE_BIT,
-        .tar_type = REG_TYPE_BIT,
+        .reg_type = REG_TYPE_UINT16,
+        .tar_type = REG_TYPE_UINT16,
         .ifmt = ifmt_write_1,
         .ofmt = ofmt_nothing,
         .data = NULL,

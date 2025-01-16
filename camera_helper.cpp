@@ -286,6 +286,7 @@ void Camera::camera_connect_async(Camera_Callback_t conn_cb,
 	_cameraState = CAMERA_STATE_LOADING;
 	_c_cb(_user_data);
 	pthread_create(&_conn_pid, NULL, Camera::camera_connect_thread, this);
+	pthread_detach(_conn_pid);
 }
 
 void Camera::camera_connect_async(){
@@ -294,6 +295,7 @@ void Camera::camera_connect_async(){
 		_c_cb(_user_data);
 	}
 	pthread_create(&_conn_pid, NULL, Camera::camera_connect_thread, this);
+	pthread_detach(_conn_pid);
 }
 
 void* Camera::camera_connect_thread(void* args){

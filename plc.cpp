@@ -139,6 +139,8 @@ void* PLCManager::plc_worker_thread(void* args){
 			}
 		}
 		if(ret != 0){
+			LOG_ERROR << "PLC Task error. Ret = " << ret <<
+			", " << strerror(errno);
 			manager->_is_connected = false;
 			if(manager->_callback.connect_faild_cb){
 				manager->_callback.connect_faild_cb(manager->_callback.data);
