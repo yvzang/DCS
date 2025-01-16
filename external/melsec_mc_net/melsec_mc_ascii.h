@@ -1,0 +1,4 @@
+#ifndef	__H_MELSECMCASCIINET_H__
+#define __H_MELSECMCASCIINET_H__
+
+#endif //__H_MELSECMCASCIINET_H__
