@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/home/yuzang/linux/tools/ffmpeg-7.0.2/**",
-                "/home/yuzang/linux/tools/sqlite-version-3.33.0/**"
+                "/home/yuzang/linux/tools/sqlite-version-3.33.0/**",
+                "/home/yuzang/linux/linux/T113_Tina5.0_SDK/openwrt/package/apps/MQTTClient/src"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

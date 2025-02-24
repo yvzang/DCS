@@ -5,6 +5,7 @@
 #include <vector>
 #include <set>
 #include <semaphore.h>
+#include <functional>
 #include "cJSON.h"
 
 #define CFGBOOTPROTOKEY			"bootproto"
@@ -209,15 +210,13 @@ public:
 		std::string wifiName;
 	} WifiInfo_t;
 
-	typedef struct{
-		void (*connect_success_cb)(void*);
-		void (*connect_faild_cb)(void*);
-		void* data;
-	} ConnectStateCallback_t;
+	typedef std::function<void(void)> ConnectStateCallback_t;
+
 private:
 	std::vector<WifiInfo_t> _wifi_info;
 	wpa_supplicant_info _wpa_info;
-	ConnectStateCallback_t _callback;
+	ConnectStateCallback_t _s_cb;
+	ConnectStateCallback_t _f_cb;
 	pthread_t _connect_pid;
 public:
 	WifiManager() = delete;
@@ -226,11 +225,15 @@ public:
 	bool prepared();
 	bool connect_async();
 	bool connect();
-	bool connect_async(const std::string & wifiName, const std::string & wifiPassword, ConnectStateCallback_t cb);
-	bool connect(const std::string & wifiName, const std::string & wifiPassword);
+	bool connect_async(const std::string & wifiName, 
+					const std::string & wifiPassword, 
+					ConnectStateCallback_t s_cb,
+					ConnectStateCallback_t f_cb);
+	bool connect(const std::string & wifiName, 
+				const std::string & wifiPassword,
+				ConnectStateCallback_t s_cb,
+				ConnectStateCallback_t f_cb);
 	std::vector<WifiInfo_t>* getWifiInfo(){return &_wifi_info;};
-	ConnectStateCallback_t callback(){return _callback;};
-	void set_callback(ConnectStateCallback_t cb){_callback = cb;};
 	void wifi_scan();
 
 	virtual void fetch_network_param_daemo();

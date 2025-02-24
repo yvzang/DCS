@@ -710,15 +710,11 @@ void* connection_thread(void* args){
 	if(manager->prepared()){
 		LOG_INFO << "wifi connect success! Lunching dhcp...";
 		SYSTEMCMD("udhcpc -i %s", INTER_WLAN);
-		if(manager->callback().connect_success_cb != NULL){
-			manager->callback().connect_success_cb(manager->callback().data);
-		}
+		manager->_s_cb();
 	}
 	else{
 		LOG_INFO << "wifi connect failed!";
-		if(manager->callback().connect_faild_cb != NULL){
-			manager->callback().connect_faild_cb(manager->callback().data);
-		}
+		manager->_f_cb();
 	}
 	
 }
@@ -776,6 +772,7 @@ void WifiManager::wifi_scan(){
 
 bool WifiManager::connect_async(){
 	pthread_create(&_connect_pid, NULL, connection_thread, this);
+	pthread_detach(_connect_pid);
 }
 
 bool WifiManager::connect(){
@@ -786,32 +783,34 @@ bool WifiManager::connect(){
 	if(this->prepared()){
 		LOG_INFO << "wifi connect success! Lunching dhcp...";
 		//SYSTEMCMD("udhcpc -i %s", INTER_WLAN);
-		if(_callback.connect_success_cb){
-			_callback.connect_success_cb(_callback.data);
-		}
+		_s_cb();
 		return true;
 	}
 	LOG_INFO << "wifi connect failed!";
-	if(_callback.connect_faild_cb){
-		_callback.connect_faild_cb(_callback.data);
-	}
+	_f_cb();
 	return false;
 }
 
 bool WifiManager::connect_async(const std::string & wifiName, 
 							const std::string & wifiPassword, 
-							ConnectStateCallback_t cb){
+							ConnectStateCallback_t s_cb,
+							ConnectStateCallback_t f_cb){
 	_wpa_info.wifiName = wifiName;
 	_wpa_info.wifiPassword = wifiPassword;
 	_wpa_info.write(WPA_CONFIG_PATH);
-	_callback = cb;
+	_s_cb = s_cb;
+	_f_cb = f_cb; 
 	return this->connect_async();
 }
 
 bool WifiManager::connect(const std::string & wifiName, 
-							const std::string & wifiPassword){
+							const std::string & wifiPassword,
+							ConnectStateCallback_t s_cb,
+							ConnectStateCallback_t f_cb){
 	_wpa_info.wifiName = wifiName;
 	_wpa_info.wifiPassword = wifiPassword;
+	_s_cb = s_cb;
+	_f_cb = f_cb;
 	_wpa_info.write(WPA_CONFIG_PATH);
 	return this->connect();
 }
