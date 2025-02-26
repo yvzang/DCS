@@ -238,6 +238,7 @@ byte_array_info build_ascii_bytes_from_ushort(unsigned short data)
 {
 	byte* out = NULL;
 	int length = 2;
+	int i;
 	char hex_str[] = "0123456789ABCDEF";
 
 	out = (byte*)malloc(length * 2 + 1);
@@ -247,7 +248,7 @@ byte_array_info build_ascii_bytes_from_ushort(unsigned short data)
 	temp[0] = (byte)(0xff & data);
 	temp[1] = (byte)(0xff & (data >> 8));
 
-	for (int i = 0; i < length; i++) {
+	for (i = 0; i < length; i++) {
 		(out)[i * 2 + 0] = hex_str[(temp[i] >> 4) & 0x0F];
 		(out)[i * 2 + 1] = hex_str[(temp[i]) & 0x0F];
 	}
@@ -261,6 +262,7 @@ byte_array_info build_ascii_bytes_from_int(int data)
 {
 	byte* out = NULL;
 	int length = 4;
+	int i;
 
 	char hex_str[] = "0123456789ABCDEF";
 
@@ -273,7 +275,7 @@ byte_array_info build_ascii_bytes_from_int(int data)
 	temp[2] = (byte)(0xff & (data >> 16));
 	temp[3] = (byte)(0xff & (data >> 24));
 
-	for (int i = 0; i < length; i++) {
+	for (i = 0; i < length; i++) {
 		(out)[i * 2 + 0] = hex_str[(temp[i] >> 4) & 0x0F];
 		(out)[i * 2 + 1] = hex_str[(temp[i]) & 0x0F];
 	}
@@ -287,6 +289,7 @@ byte_array_info build_ascii_bytes_from_int(int data)
 byte_array_info build_ascii_bytes_from_byte_array(const byte* data, int length)
 {
 	byte* out = NULL;
+	int i;
 	if (data && length > 0)
 	{
 		char hex_str[] = "0123456789ABCDEF";
@@ -294,7 +297,7 @@ byte_array_info build_ascii_bytes_from_byte_array(const byte* data, int length)
 		out = (byte*)malloc(length * 2 + 1);
 		memset((void*)out, 0, length * 2 + 1);
 
-		for (int i = 0; i < length; i++) {
+		for (i = 0; i < length; i++) {
 			(out)[i * 2 + 0] = hex_str[(data[i] >> 4) & 0x0F];
 			(out)[i * 2 + 1] = hex_str[(data[i]) & 0x0F];
 		}
@@ -308,10 +311,11 @@ byte_array_info build_ascii_bytes_from_byte_array(const byte* data, int length)
 byte_array_info build_ascii_bytes_from_bool_array(const bool* value, int length)
 {
 	byte* out = NULL;
+	int i;
 	if (value != NULL && length > 0)
 	{
 		out = (byte*)malloc(length);
-		for (int i = 0; i < length; i++)
+		for (i = 0; i < length; i++)
 		{
 			out[i] = value[i] ? (byte)0x31 : (byte)0x30;
 		}
@@ -327,13 +331,14 @@ byte_array_info trans_bool_array_to_byte_data(bool_array_info value)
 {
 	byte* out = NULL;
 	int length = 0;
+	int i;
 	if (value.data != NULL)
 	{
 		length = (value.length + 1) / 2;
 		out = (byte*)malloc(length);
 		memset(out, 0, length);
 
-		for (int i = 0; i < length; i++)
+		for (i = 0; i < length; i++)
 		{
 			if (value.data[i * 2 + 0])
 				out[i] += 0x10;
@@ -355,7 +360,8 @@ byte_array_info calculate_CRC(byte_array_info data)
 {
 	int sum = 0;
 	int data_len = data.length;
-	for (int i = 1; i < data_len - 2; i++)
+	int i;
+	for (i = 1; i < data_len - 2; i++)
 	{
 		sum += data.data[i];
 	}

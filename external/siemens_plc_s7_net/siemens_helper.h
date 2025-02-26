@@ -5,7 +5,7 @@
 byte_array_info build_read_byte_command(siemens_s7_address_data address);
 byte_array_info build_read_bit_command(siemens_s7_address_data address);
 byte_array_info build_write_byte_command(siemens_s7_address_data address, byte_array_info value);
-byte_array_info build_write_bit_command(siemens_s7_address_data address, bool value);
+byte_array_info build_write_bit_command(siemens_s7_address_data address, bool_array_info value);
 
 s7_error_code_e s7_analysis_read_bit(byte_array_info resposne, byte_array_info* ret);
 s7_error_code_e s7_analysis_read_byte(byte_array_info response, byte_array_info* ret);

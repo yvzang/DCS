@@ -1,10 +1,39 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "siemens_helper.h"
 #include "socket.h"
 
 #define BUFFER_SIZE 1024
+
+byte_array_info strans_bool_array_to_byte_data(bool_array_info value)
+{
+	byte* out = NULL;
+	int length = 0;
+	if (value.data != NULL)
+	{
+		length = (value.length + 1) / 2;
+		out = (byte*)malloc(length);
+		memset(out, 0, length);
+		int i;
+		for (i = 0; i < length; i++)
+		{
+			if (value.data[i * 2 + 0])
+				out[i] += 0x10;
+
+			if ((i * 2 + 1) < length)
+			{
+				if (value.data[i * 2 + 1])
+					out[i] += 0x01;
+			}
+		}
+	}
+	byte_array_info ret;
+	ret.data = out;
+	ret.length = length;
+	return ret;
+}
 
 // 从地址构造核心报文
 byte_array_info build_read_byte_command(siemens_s7_address_data address)
@@ -223,11 +252,11 @@ byte_array_info build_write_byte_command(siemens_s7_address_data address, byte_a
 	return ret;
 }
 
-byte_array_info build_write_bit_command(siemens_s7_address_data address, bool value)
+byte_array_info build_write_bit_command(siemens_s7_address_data address, bool_array_info value)
 {
-	byte buffer[1] = { 0 };
-	ushort buffer_len = sizeof(buffer);
-	buffer[0] = value ? (byte)0x01 : (byte)0x00;
+	byte_array_info buffer_array = strans_bool_array_to_byte_data(value);
+	byte* buffer = buffer_array.data;
+	int buffer_len = buffer_array.length;
 
 	const ushort command_len = 35 + buffer_len;
 	byte* command = (byte*)malloc(command_len);
@@ -495,6 +524,7 @@ bool try_send_data_to_server(int fd, byte_array_info* in_bytes, int* real_sends)
 	}
 
 	if (retry_times >= MAX_RETRY_TIMES) {
+		printf("retry times >= MAX\n");
 		return false;
 	}
 

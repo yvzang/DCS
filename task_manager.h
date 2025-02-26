@@ -8,26 +8,25 @@ typedef std::function<void(DataPayload* data)> UITaskCallback;
 typedef std::function<void()> DataBlockTaskCallback;
 
 typedef struct{
-	std::string addrStart;
-	size_t size;
-	DataPayload payload;
-} PLCDataBlock;
-
-typedef struct{
-	std::shared_ptr<PLCDataBlock> datablock;
-	std::vector<std::shared_ptr<DataBlockTaskCallback>> successCallback;
-	std::vector<std::shared_ptr<DataBlockTaskCallback>> failCallback;
+	std::shared_ptr<DeviceTask> pDeviceTask;
+	std::shared_ptr<DataPayload> pPayload;
+	std::vector<DataBlockTaskCallback> arraySuccessCallback;
+	std::vector<DataBlockTaskCallback> arrayTempSuccessCallback;
 } DataBlockTask;
 
 class TaskManagerImpl{
-private:
+protected:
 	std::atomic<bool> Stop_;
 	std::thread CoreThread_;
 	std::list<std::shared_ptr<DeviceTask>> PermenentTasks_;
 	std::list<std::shared_ptr<DeviceTask>> TempTasks_;
+
+	DeviceManager deviceManager_;
 public:
-	TaskManagerImpl(){};
+	TaskManagerImpl();
 	~TaskManagerImpl();
+    bool registerDevice(DeviceDescribe describe);
+    void unregisterDevice(DeviceNameType id);
 	void registerPermenentTask(std::shared_ptr<DeviceTask> task);
 	void registerTempTask(std::shared_ptr<DeviceTask> task);
 	bool run();
@@ -36,20 +35,36 @@ private:
 	void coreThreadFunc_();
 };
 
+class TaskListenerAction{
+public:
+	virtual void on_success(std::shared_ptr<DataBlockTask> pTask){};
+	virtual void on_fail(std::shared_ptr<DataBlockTask> pTask){};
+	virtual void connect_lost(std::shared_ptr<DataBlockTask> pTask){};
+};
+
 class TaskManager : public TaskManagerImpl{
 private:
-	std::vector<std::shared_ptr<PLCDataBlock>> DataBlocks_;
+	std::function<void()> connectionLostCallback_;
 	std::vector<std::shared_ptr<DataBlockTask>> DataBlockTasks_;
 public:
 	TaskManager(){};
 	~TaskManager();
-	void registerReadDatablockTask(const std::string & addrStart,
+	void setCallback(std::function<void()> callback){connectionLostCallback_ = callback;};
+	void registerReadDatablockTask(const std::string & deviceID,
+									PLCAddress_t addrType,
+									const std::string & addrStart,
 									size_t size);
 	void registerUIFlashTask(const std::string & addrStart,
-							size_t offset,
 							UITaskCallback cbk);
+	void registerOnceUIFlashTask(const std::string & addrStart,
+							UITaskCallback cbk);
+	void fetchPLCValue(const std::string & addrStart,
+							UITaskCallback cbk);
+	
+	friend class TaskListenerAction;
+private:
+	void readDatablockSuccessFunc_(std::shared_ptr<DataBlockTask> pTask);
+	void readDatablockFailFunc_(std::shared_ptr<DataBlockTask> pTask);
 };
-
-
 
 #endif

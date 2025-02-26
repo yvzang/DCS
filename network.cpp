@@ -726,7 +726,7 @@ WifiManager::WifiManager(const std::string & ifaceName)
 	if(_wpa_info.read(WPA_CONFIG_PATH)){
 		//connect_async();
 	}
-	fetch_network_param_daemo();
+	//fetch_network_param_daemo();
 }
 
 WifiManager::~WifiManager(){
@@ -773,6 +773,7 @@ void WifiManager::wifi_scan(){
 bool WifiManager::connect_async(){
 	pthread_create(&_connect_pid, NULL, connection_thread, this);
 	pthread_detach(_connect_pid);
+	return true;
 }
 
 bool WifiManager::connect(){

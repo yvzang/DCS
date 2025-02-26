@@ -21,6 +21,7 @@ identity_t Identity::curent_identity() const{
 
 bool Identity::identity2manu(){
 	id_type = MANUPULATOR;
+	return true;
 }
 
 bool Identity::identity2manager(const std::string & pwd){
@@ -60,3 +61,26 @@ bool Identity::modify_password(int id, const std::string & password){
 	return database.excute(sql_str, resp);
 }
 
+
+bool AccessContrl::login(const std::string & pwd){
+	if(identity2manager(pwd)){
+		if(IDSwitchCallback_)
+			IDSwitchCallback_(id_type);
+		return true;
+	}
+	return false;
+}
+
+bool AccessContrl::logout(){
+	if(identity2manu()){
+		if(IDSwitchCallback_)
+			IDSwitchCallback_(id_type);
+		return true;
+	}
+	return false;
+}
+
+AccessContrl* AccessContrl::getInstance(){
+	static AccessContrl ac;
+	return &ac;
+}

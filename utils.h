@@ -3,6 +3,8 @@
 #include <string>
 #include <sstream>
 
+#define CONFIG_PLC_DEVICE_ID				"mc_plc"
+
 template<class T>
 std::string toString(const T & any){
 	std::stringstream ss;

@@ -93,7 +93,7 @@ s7_error_code_e read_bit_value(int fd, const char* address, int length, byte_arr
 s7_error_code_e read_byte_value(int fd, const char* address, int length, byte_array_info* out_bytes);
 s7_error_code_e mread_address_data(int fd, siemens_s7_address_data address_data, byte_array_info* out_bytes);
 
-s7_error_code_e write_bit_value(int fd, const char* address, int length, bool value);
+s7_error_code_e write_bit_value(int fd, const char* address, int length, bool_array_info value);
 s7_error_code_e write_byte_value(int fd, const char* address, int length, byte_array_info in_bytes);
 s7_error_code_e write_address_data(int fd, siemens_s7_address_data address_data, byte_array_info in_bytes);
 

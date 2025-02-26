@@ -1,6 +1,7 @@
 #ifndef __SETTING_H__
 #define __SETTING_H__
 #include <map>
+#include <vector>
 #include <string>
 
 
@@ -29,6 +30,8 @@
             								.pReleasedCallback = key##x##Release_cb,	\
             								.pData = this								\
         								};
+
+#define CONFIG_PLC_DEVICE_ID			"mc_plc"
 
 const std::map<std::string, std::string> FAULT_MESSAGE = {
 	{"M360", "1#行走电机故障"},

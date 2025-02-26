@@ -70,7 +70,7 @@ LDFLAGS ?= -Wl,--no-undefined \
 EXTERNAL_A = $(EXTERNAL_LIB_DIR)/libmc.a \
 				$(EXTERNAL_LIB_DIR)/libs7.a
 
-BIN = main
+BIN = main_test
 
 
 #Collect the files to compile
@@ -95,7 +95,16 @@ CSRCS += $(LVGL_DIR)/demoVdecoder.c \
 			$(LVGL_DIR)/down_20x20.c \
 			$(LVGL_DIR)/off_20x20.c \
 			$(LVGL_DIR)/lv_font_cn_songti_medium_21_msg.c
-CPPSRCS += $(LVGL_DIR)/lv_main_widget.cpp \
+CPPSRCS += $(LVGL_DIR)/lv_page0.cpp \
+			$(LVGL_DIR)/lv_page1.cpp \
+			$(LVGL_DIR)/lv_page2.cpp \
+			$(LVGL_DIR)/lv_page3.cpp \
+			$(LVGL_DIR)/lv_page4.cpp \
+			$(LVGL_DIR)/lv_page5.cpp \
+			$(LVGL_DIR)/lv_UITopPage.cpp \
+			$(LVGL_DIR)/lv_message_window.cpp \
+			$(LVGL_DIR)/plccore.cpp \
+			$(LVGL_DIR)/task_manager.cpp \
 			$(LVGL_DIR)/camera_helper.cpp \
 			$(LVGL_DIR)/cJSON.cpp \
 			$(LVGL_DIR)/network.cpp \

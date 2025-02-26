@@ -57,7 +57,7 @@ typedef struct _DeviceTask{
     PLCAddress_t addrType;
     std::string address;
     size_t size;
-    DataPayload* payload;
+    std::shared_ptr<DataPayload> payload;
     PLCTaskCallback PLCTaskSuccessCallback = nullptr;
     PLCTaskCallback PLCTaskFailedCallback = nullptr;
 }DeviceTask;
@@ -96,9 +96,12 @@ public:
     ~DeviceManager();
 
     bool registerDevice(DeviceDescribe describe);
+    bool reconnectDevice(DeviceNameType id);
     void unregisterDevice(DeviceNameType id);
 
     bool submitePLCTask(std::shared_ptr<DeviceTask> task);
+
+    bool isRunning(){return !Stop_.load();};
     void run();
     void stop();
 private:

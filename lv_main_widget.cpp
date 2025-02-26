@@ -4921,12 +4921,12 @@ void ModelSettingWind::btn_model_menu_event_cb(lv_event_t* e){
 }
 
 
-WorkRecordWind* WorkRecordWind::getInstance(lv_obj_t* parent){
-    static WorkRecordWind wind(parent);
+UIPage2* UIPage2::getInstance(lv_obj_t* parent){
+    static UIPage2 wind(parent);
     return &wind; 
 }
 
-WorkRecordWind::WorkRecordWind(lv_obj_t* parent)
+UIPage2::UIPage2(lv_obj_t* parent)
 :_pDatabase(DATABASE_FILE){
     ui = new lv_ui;
     ui->screen_1_background_tile_4 = parent;
@@ -5032,12 +5032,12 @@ WorkRecordWind::WorkRecordWind(lv_obj_t* parent)
     update_table();
 }
 
-void WorkRecordWind::events_init_screen(){
+void UIPage2::events_init_screen(){
     lv_obj_add_event_cb(ui->btnmx, btn_event_cb, LV_EVENT_VALUE_CHANGED, this);
 }
 
 
-bool WorkRecordWind::insert_record(const std::string & timestamp, 
+bool UIPage2::insert_record(const std::string & timestamp, 
                         const std::string & arg1, 
                         const std::string & arg2, 
                         const std::string & arg3, 
@@ -5069,7 +5069,7 @@ bool WorkRecordWind::insert_record(const std::string & timestamp,
     return true;
 }
 
-bool WorkRecordWind::load_first_table_record(){
+bool UIPage2::load_first_table_record(){
     SQL_Response resp;
     std::string sql = "SELECT * FROM work_record "\
                     "ORDER BY timestamp DESC "\
@@ -5088,7 +5088,7 @@ bool WorkRecordWind::load_first_table_record(){
     return true;
 }
 
-bool WorkRecordWind::load_next_table_record(){
+bool UIPage2::load_next_table_record(){
     SQL_Response resp;
     std::string sql_fmt = "SELECT * FROM work_record "\
                     "WHERE timestamp < {0} "\
@@ -5110,7 +5110,7 @@ bool WorkRecordWind::load_next_table_record(){
     return true;
 }
 
-bool WorkRecordWind::load_previous_table_record(){
+bool UIPage2::load_previous_table_record(){
     SQL_Response resp;
     std::string sql_fmt = "SELECT * FROM work_record "\
                     "WHERE timestamp > {0} "\
@@ -5133,7 +5133,7 @@ bool WorkRecordWind::load_previous_table_record(){
 }
 
 
-void WorkRecordWind::update_table(){
+void UIPage2::update_table(){
     std::stringstream ss;
     for(int row = 1; row < _workRecordList.size()&&row < ui->table_row; row++){
         //序号
@@ -5171,8 +5171,8 @@ void WorkRecordWind::update_table(){
     lv_obj_align_to(ui->button_widget, ui->screen_1_work_record, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 }
 
-void WorkRecordWind::btn_event_cb(lv_event_t* e){
-    WorkRecordWind* pWind = reinterpret_cast<WorkRecordWind*>(lv_event_get_user_data(e));
+void UIPage2::btn_event_cb(lv_event_t* e){
+    UIPage2* pWind = reinterpret_cast<UIPage2*>(lv_event_get_user_data(e));
     lv_obj_t* btns = reinterpret_cast<lv_obj_t*>(lv_event_get_target(e));
     lv_event_code_t code = lv_event_get_code(e);
     if(code == LV_EVENT_VALUE_CHANGED){
@@ -5438,7 +5438,7 @@ void FaultRecordWind::update_table(){
 }
 
 void FaultRecordWind::btn_event_cb(lv_event_t* e){
-    WorkRecordWind* pWind = reinterpret_cast<WorkRecordWind*>(lv_event_get_user_data(e));
+    UIPage2* pWind = reinterpret_cast<UIPage2*>(lv_event_get_user_data(e));
     lv_obj_t* btns = reinterpret_cast<lv_obj_t*>(lv_event_get_target(e));
     lv_event_code_t code = lv_event_get_code(e);
     if(code == LV_EVENT_VALUE_CHANGED){
@@ -6251,7 +6251,7 @@ _pIdentity(Identity::getInstance()){
     _pParam1Wind = Param1SettingWind::getInstance(param1_tile);
     _pParam2Wind = Param2SettingWind::getInstance(param2_tile);
     _pModelWind = ModelSettingWind::getInstance(model_tile);
-    _pWorkRecordWind = WorkRecordWind::getInstance(workrecord_tile);
+    _pWorkRecordWind = UIPage2::getInstance(workrecord_tile);
     _pFultRecordWind = FaultRecordWind::getInstance(faultrecord_tile);
 
     _wifi_setting_wind = new WIFISettingWind(camera1, camera2);

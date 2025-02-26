@@ -362,7 +362,7 @@ public:
 };
 
 
-class WorkRecordWind{
+class UIPage2{
 public:
     struct WorkRecordItem{
         std::string timestamp;
@@ -386,8 +386,8 @@ private:
     Database _pDatabase;
     static void btn_event_cb(lv_event_t* e);
 public:
-    static WorkRecordWind* getInstance(lv_obj_t* parent);
-	WorkRecordWind(lv_obj_t* parent);
+    static UIPage2* getInstance(lv_obj_t* parent);
+	UIPage2(lv_obj_t* parent);
     void events_init_screen();
     bool insert_record(const std::string & timestamp, 
                         const std::string & arg1, 
@@ -468,7 +468,7 @@ private:
     Param1SettingWind* _pParam1Wind;
     Param2SettingWind* _pParam2Wind;
     ModelSettingWind* _pModelWind;
-    WorkRecordWind* _pWorkRecordWind;
+    UIPage2* _pWorkRecordWind;
     FaultRecordWind* _pFultRecordWind;
     ModifyPasswordWind* _pModifyPasswordWind;
     LoggingWind* _pLoggingWind;

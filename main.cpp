@@ -6,7 +6,7 @@
 #include <string>
 #include <time.h>
 #include "limlog.h"
-#include "lv_main_widget.h"
+#include "lv_UITopPage.h"
 extern "C"{
     #include "G2dApi.h"
     #include "sunxiMemInterface.h"
@@ -35,6 +35,8 @@ extern "C"{
 pthread_mutex_t lv_lock;
 pthread_attr_t thread_attr;
 int plc_fd;
+
+extern TaskManager gTaskManager;
 
 void* lv_my_widget(void* args){
     std::string videourl= "rtsp://admin:admin@192.168.1.10:554/h265/ch1/sub/av_stream";
@@ -148,22 +150,19 @@ void* lv_my_widget(void* args){
     avformat_close_input(&pFormatCtx);
 }
 
-int plc_connecter_init(char* ipaddr, int port){
-    plc_fd = mc_connect(ipaddr, port, 0, 0);
-    if(plc_fd < 0){
-        LOG_ERROR << "cannot connect to plc.";
-    }
-    return plc_fd;
-}
-
-void* camera_connect_async(void* args){
-    lv_obj_t* camera = (lv_obj_t*)args;
-    static lv_img_dsc_t img;
-    static int state = 0;
-    void* pDecoder;
-    static std::string rtsp_str = "rtsp://admin:@192.168.1.11:554/h265/ch1/sub/av_stream";
-    decoder_start(&pDecoder, rtsp_str.c_str(),
-                    camera, &img, &state);
+void registerPLCTask(){
+    gTaskManager.registerReadDatablockTask("mc_plc",
+                                        PLC_ADDRESS_UINT32,
+                                        "D140", 10);
+    gTaskManager.registerReadDatablockTask("mc_plc",
+                                        PLC_ADDRESS_BOOL,
+                                        "M194", 4);
+    gTaskManager.registerReadDatablockTask("mc_plc",
+                                        PLC_ADDRESS_UINT32,
+                                        "D1000", 45);
+    gTaskManager.registerReadDatablockTask("mc_plc",
+                                        PLC_ADDRESS_BOOL,
+                                        "M360", 24);
 }
 
 int main(void)
@@ -210,7 +209,8 @@ int main(void)
     //lv_indev_set_cursor(mouse_indev, cursor_obj);             /*Connect the image  object to the driver*/
 
     /*Create a Demo*/
-    MainWind* pMainWind = lv_main_widgets();
+    registerPLCTask();
+    UITopPage topPage;
     //plc_connecter_init("192.168.2.90", 5551);
 
     int policy;

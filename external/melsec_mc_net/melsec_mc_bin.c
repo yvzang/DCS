@@ -416,10 +416,11 @@ void extract_actual_bool_data(byte_array_info* response)
 {
 	// λ��ȡ
 	int resp_len = response->length * 2;
+	int i;
 	byte* content = (byte*)malloc(resp_len);
 	memset(content, 0, resp_len);
 
-	for (int i = 0; i < response->length; i++)
+	for (i = 0; i < response->length; i++)
 	{
 		if ((response->data[i] & 0x10) == 0x10)
 			content[i * 2 + 0] = 0x01;
@@ -644,6 +645,352 @@ mc_error_code_e mc_read_string(int fd, const char* address, int length, char** v
 	return ret;
 }
 
+mc_error_code_e mc_batch_read_bool(int fd, const char* address, bool* vals, int size){
+	if (fd <= 0 || address == NULL || vals == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	mc_error_code_e ret = MC_ERROR_CODE_FAILED;
+	byte_array_info read_data;
+	memset(&read_data, 0, sizeof(read_data));
+	ret = read_bool_value(fd, address, size, &read_data);
+	if (ret == MC_ERROR_CODE_SUCCESS && read_data.length > 0)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			vals[i] = (bool)read_data.data[i];
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+mc_error_code_e mc_batch_read_short(int fd, const char* address, short* vals, int size){
+	if (fd <= 0 || address == NULL || vals == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	mc_error_code_e ret = MC_ERROR_CODE_FAILED;
+	byte_array_info read_data;
+	memset(&read_data, 0, sizeof(read_data));
+	ret = read_word_value(fd, address, size, &read_data);
+	if (ret == MC_ERROR_CODE_SUCCESS && read_data.length >= 2*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			vals[i] = mbytes2short(&read_data.data[i*2]);
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+mc_error_code_e mc_batch_read_ushort(int fd, const char* address, ushort* vals, int size){
+	if (fd <= 0 || address == NULL || vals == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	mc_error_code_e ret = MC_ERROR_CODE_FAILED;
+	byte_array_info read_data;
+	memset(&read_data, 0, sizeof(read_data));
+	ret = read_word_value(fd, address, size, &read_data);
+	if (ret == MC_ERROR_CODE_SUCCESS && read_data.length >= 2*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			vals[i] = mbytes2ushort(&read_data.data[i*2]);
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+mc_error_code_e mc_batch_read_int32(int fd, const char* address, int32* vals, int size){
+	if (fd <= 0 || address == NULL || vals == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	mc_error_code_e ret = MC_ERROR_CODE_FAILED;
+	byte_array_info read_data;
+	memset(&read_data, 0, sizeof(read_data));
+	ret = read_word_value(fd, address, 2*size, &read_data);
+	if (ret == MC_ERROR_CODE_SUCCESS && read_data.length >= 4*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			vals[i] = mbytes2int32(&read_data.data[i*4]);
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+mc_error_code_e mc_batch_read_uint32(int fd, const char* address, uint32* vals, int size){
+	if (fd <= 0 || address == NULL || vals == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	mc_error_code_e ret = MC_ERROR_CODE_FAILED;
+	byte_array_info read_data;
+	memset(&read_data, 0, sizeof(read_data));
+	ret = read_word_value(fd, address, 2*size, &read_data);
+	if (ret == MC_ERROR_CODE_SUCCESS && read_data.length >= 4*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			vals[i] = mbytes2uint32(&read_data.data[i*4]);
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+mc_error_code_e mc_batch_read_int64(int fd, const char* address, int64* vals, int size){
+	if (fd <= 0 || address == NULL || vals == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	mc_error_code_e ret = MC_ERROR_CODE_FAILED;
+	byte_array_info read_data;
+	memset(&read_data, 0, sizeof(read_data));
+	ret = read_word_value(fd, address, 4*size, &read_data);
+	if (ret == MC_ERROR_CODE_SUCCESS && read_data.length >= 8*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			vals[i] = mbytes2bigInt(&read_data.data[i*8]);
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+mc_error_code_e mc_batch_read_uint64(int fd, const char* address, uint64* vals, int size){
+	if (fd <= 0 || address == NULL || vals == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	mc_error_code_e ret = MC_ERROR_CODE_FAILED;
+	byte_array_info read_data;
+	memset(&read_data, 0, sizeof(read_data));
+	ret = read_word_value(fd, address, 4*size, &read_data);
+	if (ret == MC_ERROR_CODE_SUCCESS && read_data.length >= 8*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			vals[i] = mbytes2ubigInt(&read_data.data[i*8]);
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+mc_error_code_e mc_patch_read_uint32(int fd, const char* address, uint32* vals, int size)
+{
+	if (fd <= 0 || address == NULL || vals == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	mc_error_code_e ret = MC_ERROR_CODE_FAILED;
+	byte_array_info read_data;
+	memset(&read_data, 0, sizeof(read_data));
+	ret = read_word_value(fd, address, 2*size, &read_data);
+	if (ret == MC_ERROR_CODE_SUCCESS && read_data.length >= 4*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			vals[i] = mbytes2uint32(&read_data.data[i*4]);
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+mc_error_code_e mc_batch_read_float(int fd, const char* address, float* vals, int size){
+	if (fd <= 0 || address == NULL || vals == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	mc_error_code_e ret = MC_ERROR_CODE_FAILED;
+	byte_array_info read_data;
+	memset(&read_data, 0, sizeof(read_data));
+	ret = read_word_value(fd, address, 2*size, &read_data);
+	if (ret == MC_ERROR_CODE_SUCCESS && read_data.length >= 4*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			vals[i] = mbytes2float(&read_data.data[i*4]);
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+mc_error_code_e mc_batch_read_double(int fd, const char* address, double* vals, int size){
+	if (fd <= 0 || address == NULL || vals == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	mc_error_code_e ret = MC_ERROR_CODE_FAILED;
+	byte_array_info read_data;
+	memset(&read_data, 0, sizeof(read_data));
+	ret = read_word_value(fd, address, 4*size, &read_data);
+	if (ret == MC_ERROR_CODE_SUCCESS && read_data.length >= 8*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			vals[i] = mbytes2double(&read_data.data[i*8]);
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+mc_error_code_e mc_batch_write_bool(int fd, const char* address, const bool* val, int size){
+	if (fd <= 0 || address == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	bool_array_info write_data;
+	bool* data = (bool*)malloc(size);
+	if (data == NULL)
+		return MC_ERROR_CODE_MALLOC_FAILED;
+
+	int i;
+	for(i = 0; i < size; i++)
+		data[i] = val[i];
+
+	write_data.data = data;
+	write_data.length = size;
+	return write_bool_value(fd, address, size, write_data);
+}
+
+mc_error_code_e mc_batch_write_short(int fd, const char* address, const short* val, int size)
+{
+	if (fd <= 0 || address == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	int write_len = 2*size;
+	byte_array_info write_data;
+	memset(&write_data, 0, sizeof(write_data));
+	write_data.data = (byte*)malloc(write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		mshort2bytes(val[i], write_data.data+(i*2));
+	}
+	return write_word_value(fd, address, size, write_data);
+}
+
+mc_error_code_e mc_batch_write_ushort(int fd, const char* address, const ushort* val, int size){
+	if (fd <= 0 || address == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	int write_len = 2*size;
+	byte_array_info write_data;
+	memset(&write_data, 0, sizeof(write_data));
+	write_data.data = (byte*)malloc(write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		mushort2bytes(val[i], write_data.data+(i*2));
+	}
+	return write_word_value(fd, address, size, write_data);
+}
+
+mc_error_code_e mc_batch_write_int32(int fd, const char* address, const int32* val, int size){
+	if (fd <= 0 || address == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	int write_len = 4*size;
+	byte_array_info write_data;
+	memset(&write_data, 0, sizeof(write_data));
+	write_data.data = (byte*)malloc(write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		mint2bytes(val[i], write_data.data+(i*4));
+	}
+	return write_word_value(fd, address, 2*size, write_data);
+}
+
+mc_error_code_e mc_batch_write_uint32(int fd, const char* address, const uint32* val, int size){
+	if (fd <= 0 || address == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	int write_len = 4*size;
+	byte_array_info write_data;
+	memset(&write_data, 0, sizeof(write_data));
+	write_data.data = (byte*)malloc(write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		muint2bytes(val[i], write_data.data+(i*4));
+	}
+	return write_word_value(fd, address, 2*size, write_data);
+}
+
+mc_error_code_e mc_batch_write_int64(int fd, const char* address, const int64* val, int size){
+	if (fd <= 0 || address == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	int write_len = 8*size;
+	byte_array_info write_data;
+	memset(&write_data, 0, sizeof(write_data));
+	write_data.data = (byte*)malloc(write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		mubigInt2bytes(val[i], write_data.data+(i*8));
+	}
+	return write_word_value(fd, address, 4*size, write_data);
+}
+
+mc_error_code_e mc_batch_write_uint64(int fd, const char* address, const uint64* val, int size){
+	if (fd <= 0 || address == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	int write_len = 8*size;
+	byte_array_info write_data;
+	memset(&write_data, 0, sizeof(write_data));
+	write_data.data = (byte*)malloc(write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		mbigInt2bytes(val[i], write_data.data+(i*8));
+	}
+	return write_word_value(fd, address, 4*size, write_data);
+}
+
+mc_error_code_e mc_batch_write_float(int fd, const char* address, const float* val, int size){
+	if (fd <= 0 || address == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	int write_len = 4*size;
+	byte_array_info write_data;
+	memset(&write_data, 0, sizeof(write_data));
+	write_data.data = (byte*)malloc(write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		mfloat2bytes(val[i], write_data.data+(i*4));
+	}
+	return write_word_value(fd, address, 2*size, write_data);
+}
+
+mc_error_code_e mc_batch_write_double(int fd, const char* address, const double* val, int size){
+	if (fd <= 0 || address == NULL)
+		return MC_ERROR_CODE_INVALID_PARAMETER;
+
+	int write_len = 8*size;
+	byte_array_info write_data;
+	memset(&write_data, 0, sizeof(write_data));
+	write_data.data = (byte*)malloc(write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		mdouble2bytes(val[i], write_data.data+(i*8));
+	}
+	return write_word_value(fd, address, 4*size, write_data);
+}
+
 mc_error_code_e mc_write_bool(int fd, const char* address, bool val)
 {
 	if (fd <= 0 || address == NULL)
@@ -703,7 +1050,7 @@ mc_error_code_e mc_write_int32(int fd, const char* address, int32 val)
 	write_data.data = (byte*)malloc(write_len);
 	write_data.length = write_len;
 
-	int2bytes(val, write_data.data);
+	mint2bytes(val, write_data.data);
 	return write_word_value(fd, address, 2, write_data);
 }
 

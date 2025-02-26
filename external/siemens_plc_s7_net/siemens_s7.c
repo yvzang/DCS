@@ -179,7 +179,7 @@ s7_error_code_e mread_address_data(int fd, siemens_s7_address_data address_data,
 }
 
 //////////////////////////////////////////////////////////////////////////
-s7_error_code_e write_bit_value(int fd, const char* address, int length, bool value)
+s7_error_code_e write_bit_value(int fd, const char* address, int length, bool_array_info value)
 {
 	if (fd <= 0 || address == NULL)
 		return S7_ERROR_CODE_INVALID_PARAMETER;
@@ -684,12 +684,204 @@ s7_error_code_e s7_read_string(int fd, const char* address, int length, char** v
 	return ret;
 }
 
+s7_error_code_e s7_batch_read_bool(int fd, const char* address, bool* val, int size){
+	int read_byte_size = (int)(size / 8)+1;
+	byte_array_info read_data = {0};
+	read_data.data = (byte*)malloc(read_byte_size);
+	read_data.length = read_byte_size;
+	s7_error_code_e ret = s7_batch_read_byte(fd, address, read_data.data, read_byte_size);
+	if(ret != S7_ERROR_CODE_SUCCESS){
+		return ret;
+	}
+
+    for (size_t i = 0; i < read_data.length; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            size_t boolIndex = i * 8 + j;
+            if ((read_data.data[i] & (1 << j)) != 0) { //如果对应的位是1， 则为true
+                val[boolIndex] = true;
+            }
+			else{
+				val[boolIndex] = false;
+			}
+        }
+    }
+	free(read_data.data);
+    return ret;
+}
+
+s7_error_code_e s7_batch_read_byte(int fd, const char* address, byte* val, int size)
+{
+	if (fd <= 0 || address == NULL || strlen(address) == 0 || val == NULL)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	byte_array_info read_data = { 0 };
+	ret = read_byte_value(fd, address, size, &read_data);
+	if (ret == S7_ERROR_CODE_SUCCESS && read_data.length >= size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			val[i] = read_data.data[i];
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+s7_error_code_e s7_batch_read_short(int fd, const char* address, short* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0 || val == NULL)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	byte_array_info read_data = { 0 };
+	ret = read_byte_value(fd, address, 2*size, &read_data);
+	if (ret == S7_ERROR_CODE_SUCCESS && read_data.length > 2*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			val[i] = (short)ntohs(bytes2short(read_data.data+(2*i)));
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+s7_error_code_e s7_batch_read_ushort(int fd, const char* address, ushort* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0 || val == NULL)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	byte_array_info read_data = { 0 };
+	ret = read_byte_value(fd, address, 2*size, &read_data);
+	if (ret == S7_ERROR_CODE_SUCCESS && read_data.length >= 2*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			val[i] = (ushort)ntohs(bytes2ushort(read_data.data+(2*i)));
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+s7_error_code_e s7_batch_read_int32(int fd, const char* address, int32* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0 || val == NULL)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	byte_array_info read_data = { 0 };
+	ret = read_byte_value(fd, address, 4*size, &read_data);
+	if (ret == S7_ERROR_CODE_SUCCESS && read_data.length >= 4*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			val[i] = (int32)ntohl(bytes2int32(read_data.data+(4*i)));
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+s7_error_code_e s7_batch_read_uint32(int fd, const char* address, uint32* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0 || val == NULL)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	byte_array_info read_data = { 0 };
+	ret = read_byte_value(fd, address, 4*size, &read_data);
+	if (ret == S7_ERROR_CODE_SUCCESS && read_data.length >= 4*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			val[i] = (uint32)ntohs(bytes2uint32(read_data.data+(4*i)));
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+s7_error_code_e s7_batch_read_int64(int fd, const char* address, int64* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0 || val == NULL)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	byte_array_info read_data = { 0 };
+	ret = read_byte_value(fd, address, 8*size, &read_data);
+	if (ret == S7_ERROR_CODE_SUCCESS && read_data.length >= 8*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			val[i] = (int64)ntohs(bytes2bigInt(read_data.data+(8*i)));
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+s7_error_code_e s7_batch_read_uint64(int fd, const char* address, uint64* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0 || val == NULL)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	byte_array_info read_data = { 0 };
+	ret = read_byte_value(fd, address, 8*size, &read_data);
+	if (ret == S7_ERROR_CODE_SUCCESS && read_data.length >= 8*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			val[i] = (uint64)ntohs(bytes2ubigInt(read_data.data+(8*i)));
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+s7_error_code_e s7_batch_read_float(int fd, const char* address, float* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0 || val == NULL)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	byte_array_info read_data = { 0 };
+	ret = read_byte_value(fd, address, 4*size, &read_data);
+	if (ret == S7_ERROR_CODE_SUCCESS && read_data.length >= 4*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			val[i] = ntohf_(bytes2uint32(read_data.data+(4*i)));
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
+s7_error_code_e s7_batch_read_double(int fd, const char* address, double* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0 || val == NULL)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	byte_array_info read_data = { 0 };
+	ret = read_byte_value(fd, address, 8*size, &read_data);
+	if (ret == S7_ERROR_CODE_SUCCESS && read_data.length >= 8*size)
+	{
+		int i;
+		for(i = 0; i < size; i++){
+			val[i] = ntohd_(bytes2ubigInt(read_data.data+(8*i)));
+		}
+		RELEASE_DATA(read_data.data);
+	}
+	return ret;
+}
+
 s7_error_code_e s7_write_bool(int fd, const char* address, bool val)
 {
 	if (fd <= 0 || address == NULL || strlen(address) == 0)
 		return S7_ERROR_CODE_INVALID_PARAMETER;
 
-	return write_bit_value(fd, address, 1, val);
+	bool_array_info write_data = { 0 };
+	write_data.data = &val;
+	write_data.length = 1;
+
+	return write_bit_value(fd, address, 1, write_data);
 }
 
 s7_error_code_e s7_write_byte(int fd, const char* address, byte val)
@@ -865,6 +1057,202 @@ s7_error_code_e s7_write_string(int fd, const char* address, int length, const c
 	write_data.length = write_len;
 
 	ret = write_byte_value(fd, address, write_len, write_data);
+	RELEASE_DATA(write_data.data);
+	return ret;
+}
+
+s7_error_code_e s7_batch_write_bool(int fd, const char* address, bool* val, int size){
+	if(fd <= 0 || address == NULL || val == NULL)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+	byte_array_info write_data = {0};
+	write_data.length = (size + 7) / 8;
+	write_data.data = (byte*)malloc(write_data.length);
+	memset(write_data.data, 0, write_data.length);
+	if(write_data.data == NULL){
+		return S7_ERROR_CODE_MALLOC_FAILED;
+	}
+
+    for (size_t i = 0; i < size; i++) {
+        size_t byteIndex = i / 8;
+        size_t bitIndex = i % 8;
+
+        if (val[i]) {
+            write_data.data[byteIndex] |= (1 << bitIndex);
+        }
+    }
+
+	int ret = s7_batch_write_byte(fd, address, write_data.data, write_data.length);
+	free(write_data.data);
+	return ret;
+}
+
+s7_error_code_e s7_batch_write_byte(int fd, const char* address, byte* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	byte_array_info write_data = { 0 };
+	write_data.data = val;
+	write_data.length = size;
+
+	return write_byte_value(fd, address, size, write_data);
+}
+
+s7_error_code_e s7_batch_write_short(int fd, const char* address, short* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	int write_len = 2*size;
+	byte_array_info write_data = { 0 };
+	write_data.data = (byte*)malloc(write_len);
+	memset(write_data.data, 0, write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		short2bytes(htons(val[i]), write_data.data+(i*2));
+	}
+	ret = write_byte_value(fd, address, 2*size, write_data);
+	RELEASE_DATA(write_data.data);
+	return ret;
+}
+
+s7_error_code_e s7_batch_write_ushort(int fd, const char* address, ushort* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	int write_len = 2*size;
+	byte_array_info write_data = { 0 };
+	write_data.data = (byte*)malloc(write_len);
+	memset(write_data.data, 0, write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		ushort2bytes(htons(val[i]), write_data.data+(i*2));
+	}
+	ret = write_byte_value(fd, address, 2*size, write_data);
+	RELEASE_DATA(write_data.data);
+	return ret;
+}
+
+s7_error_code_e s7_batch_write_int32(int fd, const char* address, int32* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	int write_len = 4*size;
+	byte_array_info write_data = { 0 };
+	write_data.data = (byte*)malloc(write_len);
+	memset(write_data.data, 0, write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		int2bytes(htonl(val[i]), write_data.data+(i*4));
+	}
+	ret = write_byte_value(fd, address, 4*size, write_data);
+	RELEASE_DATA(write_data.data);
+	return ret;
+}
+
+s7_error_code_e s7_batch_write_uint32(int fd, const char* address, uint32* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	int write_len = 4*size;
+	byte_array_info write_data = { 0 };
+	write_data.data = (byte*)malloc(write_len);
+	memset(write_data.data, 0, write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		uint2bytes(htonl(val[i]), write_data.data+(i*4));
+	}
+	ret = write_byte_value(fd, address, 4*size, write_data);
+	RELEASE_DATA(write_data.data);
+	return ret;
+}
+
+s7_error_code_e s7_batch_write_int64(int fd, const char* address, int64* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	int write_len = 8*size;
+	byte_array_info write_data = { 0 };
+	write_data.data = (byte*)malloc(write_len);
+	memset(write_data.data, 0, write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		bigInt2bytes(htonll_(val[i]), write_data.data+(i*8));
+	}
+	ret = write_byte_value(fd, address, 8, write_data);
+	RELEASE_DATA(write_data.data);
+	return ret;
+}
+
+s7_error_code_e s7_batch_write_uint64(int fd, const char* address, uint64* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	int write_len = 8*size;
+	byte_array_info write_data = { 0 };
+	write_data.data = (byte*)malloc(write_len);
+	memset(write_data.data, 0, write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		ubigInt2bytes(htonll_(val[i]), write_data.data+(i*8));
+	}
+	ret = write_byte_value(fd, address, 8, write_data);
+	RELEASE_DATA(write_data.data);
+	return ret;
+}
+
+s7_error_code_e s7_batch_write_float(int fd, const char* address, float* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	int write_len = 4*size;
+	byte_array_info write_data = { 0 };
+	write_data.data = (byte*)malloc(write_len);
+	memset(write_data.data, 0, write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		uint2bytes(htonf_(val[i]), write_data.data+(i*4));
+	}
+	ret = write_byte_value(fd, address, 4*size, write_data);
+	RELEASE_DATA(write_data.data);
+	return ret;
+}
+
+s7_error_code_e s7_batch_write_double(int fd, const char* address, double* val, int size){
+	if (fd <= 0 || address == NULL || strlen(address) == 0)
+		return S7_ERROR_CODE_INVALID_PARAMETER;
+
+	s7_error_code_e ret = S7_ERROR_CODE_FAILED;
+	int write_len = 8*size;
+	byte_array_info write_data = { 0 };
+	write_data.data = (byte*)malloc(write_len);
+	memset(write_data.data, 0, write_len);
+	write_data.length = write_len;
+
+	int i;
+	for(i = 0; i < size; i++){
+		bigInt2bytes(htond_(val[i]), write_data.data+(i*8));
+	}
+	ret = write_byte_value(fd, address, 8*size, write_data);
 	RELEASE_DATA(write_data.data);
 	return ret;
 }

@@ -2,7 +2,7 @@
 #include "plccore.h"
 #include "limlog.h"
 
-#define TASKMAXTHRESHHOLD               128
+#define TASKMAXTHRESHHOLD               5
 
 uint64_t generateRandomDeviceId() {
     std::random_device rd;  // 用于获取硬件随机数
@@ -79,6 +79,14 @@ bool DeviceManager::registerDevice(DeviceDescribe describe){
     return false;
 }
 
+bool DeviceManager::reconnectDevice(DeviceNameType id){
+    auto deviceItem = deviceList_.find(id);
+    if(deviceItem != deviceList_.end()){
+        return deviceItem->second->reconnect();
+    }
+    return false;
+}
+
 void DeviceManager::unregisterDevice(DeviceNameType id){
     auto devicePtr = deviceList_.find(id);
     if(devicePtr == deviceList_.end())
@@ -102,6 +110,7 @@ void DeviceManager::run(){
 
 void DeviceManager::stop(){
     this->Stop_.store(true);
+    TaskFull_.notify_all();
     TaskEmpty_.notify_all();
 }
 
@@ -116,8 +125,6 @@ void DeviceManager::coreThreadFunc_(){
             err_code_t ret = -2;
             if(devicePair != deviceList_.end() && devicePair->second->is_connected()){
                 auto devicePtr = devicePair->second;
-                LOG_DEBUG << "operator: "<<(int)TaskIter->rw
-                        << " address: " << TaskIter->address;
                 if(TaskIter->rw == PLC_ACCESS_READ){
                     switch(TaskIter->addrType){
                         case PLC_ADDRESS_BOOL:

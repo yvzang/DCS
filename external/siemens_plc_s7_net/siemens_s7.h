@@ -40,6 +40,18 @@ s7_error_code_e s7_read_float(int fd, const char* address, float* val);
 s7_error_code_e s7_read_double(int fd, const char* address, double* val);
 s7_error_code_e s7_read_string(int fd, const char* address, int length, char** val); //need free val
 
+//batch read
+s7_error_code_e s7_batch_read_bool(int fd, const char* address, bool* val, int size);
+s7_error_code_e s7_batch_read_byte(int fd, const char* address, byte* val, int size);
+s7_error_code_e s7_batch_read_short(int fd, const char* address, short* val, int size);
+s7_error_code_e s7_batch_read_ushort(int fd, const char* address, ushort* val, int size);
+s7_error_code_e s7_batch_read_int32(int fd, const char* address, int32* val, int size);
+s7_error_code_e s7_batch_read_uint32(int fd, const char* address, uint32* val, int size);
+s7_error_code_e s7_batch_read_int64(int fd, const char* address, int64* val, int size);
+s7_error_code_e s7_batch_read_uint64(int fd, const char* address, uint64* val, int size);
+s7_error_code_e s7_batch_read_float(int fd, const char* address, float* val, int size);
+s7_error_code_e s7_batch_read_double(int fd, const char* address, double* val, int size);
+
 //write
 s7_error_code_e s7_write_bool(int fd, const char* address, bool val);
 s7_error_code_e s7_write_byte(int fd, const char* address, byte val);
@@ -52,6 +64,18 @@ s7_error_code_e s7_write_uint64(int fd, const char* address, uint64 val);
 s7_error_code_e s7_write_float(int fd, const char* address, float val);
 s7_error_code_e s7_write_double(int fd, const char* address, double val);
 s7_error_code_e s7_write_string(int fd, const char* address, int length, const char* val);
+
+//batch write
+s7_error_code_e s7_batch_write_bool(int fd, const char* address, bool* val, int size);
+s7_error_code_e s7_batch_write_byte(int fd, const char* address, byte* val, int size);
+s7_error_code_e s7_batch_write_short(int fd, const char* address, short* val, int size);
+s7_error_code_e s7_batch_write_ushort(int fd, const char* address, ushort* val, int size);
+s7_error_code_e s7_batch_write_int32(int fd, const char* address, int32* val, int size);
+s7_error_code_e s7_batch_write_uint32(int fd, const char* address, uint32* val, int size);
+s7_error_code_e s7_batch_write_int64(int fd, const char* address, int64* val, int size);
+s7_error_code_e s7_batch_write_uint64(int fd, const char* address, uint64* val, int size);
+s7_error_code_e s7_batch_write_float(int fd, const char* address, float* val, int size);
+s7_error_code_e s7_batch_write_double(int fd, const char* address, double* val, int size);
 
 //
 s7_error_code_e s7_remote_run(int fd);

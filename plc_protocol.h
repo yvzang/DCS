@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 extern "C"{
-#include "../external/melsec_mc_net/melsec_mc_bin.h"
-#include "../external/siemens_plc_s7_net/siemens_s7.h"
+#include "external/melsec_mc_net/melsec_mc_bin.h"
+#include "external/siemens_plc_s7_net/siemens_s7.h"
 #ifdef CONFIG_PROTOCOL_MODBUS
 #include "modbus/modbus.h"
 #include "modbus/modbus-tcp.h"

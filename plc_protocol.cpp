@@ -619,6 +619,7 @@ err_code_t S7Protocol::batch_write_double(const reg_address_t address, const std
 	return s7_batch_write_double(_sock_fd, address.c_str(), write_buf, val.size());
 }
 
+#ifdef CONFIG_PROTOCOL_MODBUS
 /*=============ModBusProtocolImpl==================*/
 
 template<class T>
@@ -1419,3 +1420,5 @@ bool ModBusRTUProtocol::disconnect(){
 	modbus_close(modbusContext_);
 	modbus_free(modbusContext_);
 }
+
+#endif
