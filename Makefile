@@ -70,7 +70,7 @@ LDFLAGS ?= -Wl,--no-undefined \
 EXTERNAL_A = $(EXTERNAL_LIB_DIR)/libmc.a \
 				$(EXTERNAL_LIB_DIR)/libs7.a
 
-BIN = main_test
+BIN = main
 
 
 #Collect the files to compile
@@ -115,7 +115,8 @@ CPPSRCS += $(LVGL_DIR)/lv_page0.cpp \
 			$(LVGL_DIR)/plc_protocol.cpp \
 			$(LVGL_DIR)/plc.cpp \
 			$(LVGL_DIR)/database.cpp \
-			$(LVGL_DIR)/access.cpp
+			$(LVGL_DIR)/access.cpp \
+			$(LVGL_DIR)/helper.cpp 
 
 OBJEXT ?= .o
 

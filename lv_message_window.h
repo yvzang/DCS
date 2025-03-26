@@ -19,9 +19,11 @@ public:
                 const std::string &msg);
     void create_without_btn_wind(lv_obj_t* parent, 
                                 const std::string &msg);
-    void create_error_wind(const std::string &msg);
-    void create_info_wind(const std::string &msg);
-    void delete_wind();
+    void hind();
+    void show();
+    static std::shared_ptr<MessageWind> without_btn_wind(const std::string & msg);
+    static std::shared_ptr<MessageWind> error_wind(const std::string &msg);
+    static std::shared_ptr<MessageWind> info_wind(const std::string &msg);
     static void msgbox_event_cb(lv_event_t* e);
 };
 
@@ -46,11 +48,8 @@ public:
 	~CameraSettingWind();
 };
 
-typedef std::function<void(void)> WIFIConnectCallback;
 
 class WIFISettingWind{
-public:
-    WifiManager::ConnectStateCallback_t wifi_connection_callback;
 private:
     VirtualKeyboard* _keyboard;
     lv_obj_t* setting_window;
@@ -60,28 +59,29 @@ private:
     lv_obj_t* _status_img;
     Camera* _pLefgCamera;
     Camera* _pRightCamera;
-    MessageWind _pMessageWind;
+    std::shared_ptr<MessageWind> _pSMessageWind;
+    std::shared_ptr<MessageWind> _pFMessageWind;
+    std::shared_ptr<MessageWind> _pWMessageWind;
 
 	std::atomic<bool> Stop_;
 	std::thread ScanWIFIThread_;
 
-	WIFIConnectCallback SuccessCallback_;
-	WIFIConnectCallback FailCallback_;
+	WIFIConnectionCallbackABS* WIFIParentConnectionCallback_;
 public:
-    WIFISettingWind(WIFIConnectCallback successCallback,
-					WIFIConnectCallback failCallback,
-					Camera* left_camera, Camera* right_camera);
+    WIFISettingWind(WIFIConnectionCallbackABS & WIFIConnectionCallback,
+                    Camera* left_camera, Camera* right_camera);
 	void hind();
 	void show();
-	void showWaitingWind(const std::string & msg);
+	void showWaitingWind();
 	void destroyWaitingWind();
-	static WifiManager* getWiFiManagerInstance();
 	static void setting_btnmatrix_event_cb(lv_event_t* e);
+
+	void connSuccessFunc();
+	void connFailFunc();
 private:
 	void _scanWIFILoopFunc();
-	void _connSuccessFunc();
-	void _connFailFunc();
 };
+
 
 typedef std::function<void(void)> PLCConnectionCallback;
 
@@ -102,12 +102,14 @@ public:
 	void show();
 	bool plc_connect();
 
+    void connSuccessFunc();
+	void connFailFunc();
+    void connLostFunc();
+
 private:
-	void readPLCConfigFile(const std::string & path,
-							std::string & plcIP);
-	void writePLCConfigFile(const std::string & path);
 	static void setting_btnmatrix_event_cb(lv_event_t* e);
 };
+
 
 class LoggingWind{
 private:

@@ -1,8 +1,7 @@
 #include "lv_message_window.h"
 #include "limlog.h"
 #include "utils.h"
-
-#define CONFIG_PLC_ADDRESS_FILE						"/etc/plc.conf"
+#include "helper.h"
 
 LV_FONT_DECLARE(lv_font_cn_songti_medium_21);
 LV_FONT_DECLARE(lv_font_cn_songti_medium_21_msg);
@@ -13,7 +12,42 @@ LV_IMG_DECLARE(off_20x20);
 extern TaskManager gTaskManager;
 extern void ui_init_style(lv_style_t* style);
 
-MessageWind::MessageWind():msg_wind(NULL){
+
+class PLCConnectListener : public ConnectionActionListener{
+private:
+    LinkSettingWind* pLinkWindow_;
+public:
+    PLCConnectListener(LinkSettingWind* pLinkWindow)
+    :pLinkWindow_(pLinkWindow){};
+
+    virtual void on_success(){
+        pLinkWindow_->connSuccessFunc();
+    }
+    virtual void on_fail(){
+        pLinkWindow_->connFailFunc();
+    }
+    virtual void connect_lost(){
+        pLinkWindow_->connLostFunc();
+    }
+};
+
+class WIFIWindConnectionCallback : public WIFIConnectionCallbackABS{
+private:
+    WIFISettingWind* pWIFISettingWind_;
+public:
+    WIFIWindConnectionCallback(WIFISettingWind* pWIFISettingWind)
+    :pWIFISettingWind_(pWIFISettingWind){}
+    virtual void on_success(){
+        pWIFISettingWind_->connSuccessFunc();
+    };
+    virtual void on_failed(){
+        pWIFISettingWind_->connFailFunc();
+    };
+};
+
+MessageWind::MessageWind()
+:msg_wind(NULL)
+{
 
 }
 
@@ -23,7 +57,6 @@ MessageWind::~MessageWind(){
 
 void MessageWind::create_wind(lv_obj_t* parent, const std::string & title,
                 const std::string &msg){
-    if(msg_wind != NULL)return;
     static const char* btns[] = {" ", " ", "确定", ""};
     msg_wind = lv_msgbox_create(parent, title.c_str(), msg.c_str(),
                             btns, false);
@@ -37,18 +70,18 @@ void MessageWind::create_wind(lv_obj_t* parent, const std::string & title,
     lv_obj_add_event_cb(msg_wind, msgbox_event_cb, LV_EVENT_VALUE_CHANGED, this);
 
     lv_obj_t *title_label = lv_msgbox_get_title(msg_wind); /* 获取标题部分 */
-    lv_obj_set_style_text_font(msg_wind, &lv_font_cn_songti_medium_21_msg, LV_STATE_DEFAULT); /* 设置字体 */
+    lv_obj_set_style_text_font(msg_wind, &lv_font_cn_songti_medium_21, LV_STATE_DEFAULT); /* 设置字体 */
     lv_obj_set_style_text_color(title_label, lv_color_hex(0xff0000), LV_STATE_DEFAULT); /* 设置文本颜色：红色 */
 
     lv_obj_t *content = lv_msgbox_get_content(msg_wind); /* 获取主体部分 */
-    lv_obj_set_style_text_font(content, &lv_font_cn_songti_medium_21_msg, LV_STATE_DEFAULT); /* 设置字体 */
+    lv_obj_set_style_text_font(content, &lv_font_cn_songti_medium_21, LV_STATE_DEFAULT); /* 设置字体 */
     lv_obj_set_style_text_color(content, lv_color_hex(0x6c6c6c), LV_STATE_DEFAULT); /* 设置文本颜色：灰色 */
     lv_obj_set_style_pad_top(content,15,LV_STATE_DEFAULT); /* 设置顶部填充 */
 
     lv_obj_t *btn = lv_msgbox_get_btns(msg_wind); /* 获取按钮矩阵部分 */
     lv_obj_set_style_bg_opa(btn, 0, LV_PART_ITEMS); /* 设置按钮背景透明度 */
     lv_obj_set_style_shadow_width(btn, 0, LV_PART_ITEMS); /* 去除按钮阴影 */
-    lv_obj_set_style_text_font(btn, &lv_font_cn_songti_medium_21_msg, LV_PART_ITEMS);
+    lv_obj_set_style_text_font(btn, &lv_font_cn_songti_medium_21, LV_PART_ITEMS);
     /* 设置文本颜色（未按下）：蓝色 */
     lv_obj_set_style_text_color(btn, lv_color_hex(0x2271df), LV_PART_ITEMS);
     /* 设置文本颜色（已按下）：红色 */
@@ -58,7 +91,6 @@ void MessageWind::create_wind(lv_obj_t* parent, const std::string & title,
 
 void MessageWind::create_without_btn_wind(lv_obj_t* parent, 
                                 const std::string &msg){
-    if(msg_wind != NULL)return;
     static const char* btns[] = {""};
     msg_wind = lv_msgbox_create(parent, " ", msg.c_str(),
                             btns, false);
@@ -71,39 +103,59 @@ void MessageWind::create_without_btn_wind(lv_obj_t* parent,
     lv_obj_set_style_pad_left(msg_wind,20,LV_STATE_DEFAULT); /* 设置左侧填充 */
 
     lv_obj_t *title_label = lv_msgbox_get_title(msg_wind); /* 获取标题部分 */
-    lv_obj_set_style_text_font(msg_wind, &lv_font_cn_songti_medium_21_msg, LV_STATE_DEFAULT); /* 设置字体 */
+    lv_obj_set_style_text_font(msg_wind, &lv_font_cn_songti_medium_21, LV_STATE_DEFAULT); /* 设置字体 */
     lv_obj_set_style_text_color(title_label, lv_color_hex(0xff0000), LV_STATE_DEFAULT); /* 设置文本颜色：红色 */
 
     lv_obj_t *content = lv_msgbox_get_content(msg_wind); /* 获取主体部分 */
-    lv_obj_set_style_text_font(content, &lv_font_cn_songti_medium_21_msg, LV_STATE_DEFAULT); /* 设置字体 */
+    lv_obj_set_style_text_font(content, &lv_font_cn_songti_medium_21, LV_STATE_DEFAULT); /* 设置字体 */
     lv_obj_set_style_text_color(content, lv_color_hex(0x6c6c6c), LV_STATE_DEFAULT); /* 设置文本颜色：灰色 */
     lv_obj_set_style_pad_top(content,15,LV_STATE_DEFAULT); /* 设置顶部填充 */
     lv_obj_set_style_text_align(content, LV_TEXT_ALIGN_CENTER, 0);
 }
 
-void MessageWind::create_error_wind(const std::string &msg){
+void MessageWind::hind(){
+    lv_obj_clear_flag(lv_layer_sys(), LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(lv_layer_top(), LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_style_bg_opa(lv_layer_top(), LV_OPA_TRANSP, 0);
+    lv_obj_add_flag(msg_wind, LV_OBJ_FLAG_HIDDEN);
+}
+
+void MessageWind::show(){
+    lv_obj_set_style_bg_color(lv_layer_top(), lv_palette_main(LV_PALETTE_GREY), 0);
+    lv_obj_set_style_bg_opa(lv_layer_top(), LV_OPA_50, 0);
+    lv_obj_clear_flag(msg_wind, LV_OBJ_FLAG_HIDDEN);
+}
+
+std::shared_ptr<MessageWind> MessageWind::without_btn_wind(const std::string & msg){
+    auto result = std::make_shared<MessageWind>();
+    result->create_without_btn_wind(lv_layer_top(), msg);
+    result->hind();
+    return result;
+}
+
+std::shared_ptr<MessageWind> MessageWind::error_wind(const std::string &msg){
     std::string title("错误！");
-    create_wind(lv_layer_top(), title, msg);
+    auto result = std::make_shared<MessageWind>();
+    result->create_wind(lv_layer_top(), title, msg);
+    result->hind();
+    return result;
 }
 
-void MessageWind::create_info_wind(const std::string &msg){
+std::shared_ptr<MessageWind> MessageWind::info_wind(const std::string &msg){
     std::string title("通知！");
-    create_wind(lv_layer_top(), title, msg);
+    auto result = std::make_shared<MessageWind>();
+    result->create_wind(lv_layer_top(), title, msg);
+    result->hind();
+    return result;
 }
 
-void MessageWind::delete_wind(){
-    if(msg_wind){
-        lv_obj_del_async(msg_wind);
-        msg_wind = NULL;
-    }
-}
 
 void MessageWind::msgbox_event_cb(lv_event_t* e){
     lv_obj_t *target = lv_event_get_current_target(e); /* 获取当前触发源 */
     MessageWind* pWind = (MessageWind*)lv_event_get_user_data(e);
     if(lv_msgbox_get_active_btn(target) == 2) /* 获取按钮索引 */
     {
-        pWind->delete_wind();
+        pWind->hind();
     }
 
 }
@@ -280,15 +332,16 @@ CameraSettingWind::~CameraSettingWind(){
 };
 
 
-WIFISettingWind::WIFISettingWind(WIFIConnectCallback successCallback,
-					WIFIConnectCallback failCallback,
-					Camera* left_camera, Camera* right_camera)
-:_pWiFiManager(getWiFiManagerInstance()), 
+WIFISettingWind::WIFISettingWind(WIFIConnectionCallbackABS & WIFIConnectionCallback,
+                                Camera* left_camera, Camera* right_camera)
+:_pWiFiManager(WifiManagerGetInstance()), 
 _keyboard(VirtualKeyboard::getInstance()),
 _pLefgCamera(left_camera),
 _pRightCamera(right_camera),
-SuccessCallback_(successCallback),
-FailCallback_(failCallback){
+WIFIParentConnectionCallback_(&WIFIConnectionCallback),
+_pSMessageWind(MessageWind::info_wind("连接成功！")),
+_pFMessageWind(MessageWind::info_wind("连接失败！")),
+_pWMessageWind(MessageWind::without_btn_wind("正在连接")){
     /* label style */
     static lv_style_t label_style;
     lv_style_init(&label_style);
@@ -375,11 +428,6 @@ FailCallback_(failCallback){
     hind();
 }
 
-WifiManager* WIFISettingWind::getWiFiManagerInstance(){
-    static WifiManager manager(INTER_WLAN);
-    return &manager;
-}
-
 
 void WIFISettingWind::hind(){
     lv_obj_clear_flag(lv_layer_sys(), LV_OBJ_FLAG_CLICKABLE);
@@ -403,47 +451,49 @@ void WIFISettingWind::show(){
 	}
 }
 
-void WIFISettingWind::showWaitingWind(const std::string & msg){
-	_pMessageWind.create_without_btn_wind(lv_layer_top(), msg);
+void WIFISettingWind::showWaitingWind(){
+	_pWMessageWind->show();
 }
 
 void WIFISettingWind::destroyWaitingWind(){
-	_pMessageWind.delete_wind();
+	_pWMessageWind->hind();
 }
 
-void WIFISettingWind::_connSuccessFunc(){
+void WIFISettingWind::connSuccessFunc(){
 	destroyWaitingWind();
-	_pMessageWind.create_info_wind("连接成功！");
-	SuccessCallback_();
+	_pSMessageWind->show();
+    if(WIFIParentConnectionCallback_)
+	    WIFIParentConnectionCallback_->on_success();
 }
 
-void WIFISettingWind::_connFailFunc(){
+void WIFISettingWind::connFailFunc(){
 	destroyWaitingWind();
-	_pMessageWind.create_info_wind("连接失败！");
-	FailCallback_();
+	_pFMessageWind->show();
+    if(WIFIParentConnectionCallback_)
+	    WIFIParentConnectionCallback_->on_failed();
 }
+
 
 void WIFISettingWind::setting_btnmatrix_event_cb(lv_event_t* e){
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t* target = lv_event_get_target(e);
     char buf[64]{0};
     WIFISettingWind* setting_window = reinterpret_cast<WIFISettingWind*>(lv_event_get_user_data(e));
+    if(setting_window == NULL) return;
+    static WIFIWindConnectionCallback connCallback(setting_window);
 
     if(code == LV_EVENT_VALUE_CHANGED){
         auto id = lv_btnmatrix_get_selected_btn(target);
         /* 确定按键 */
         if(id == 0){
 			//window of connecting
-			setting_window->_pMessageWind.create_without_btn_wind(lv_layer_top(), "正在连接");
-            //setting_window->_pMessageWind.create_without_btn_wind(lv_layer_top(), "正在连接wifi...");
+            setting_window->showWaitingWind();
             setting_window->_pLefgCamera->camera_stop();
             setting_window->_pRightCamera->camera_stop();
             lv_dropdown_get_selected_str(setting_window->_wifiList, buf, sizeof(buf));
             std::string wifiName = buf;
             std::string wifiPwd = lv_textarea_get_text(setting_window->wifi_pwd);
-            if(setting_window->_pWiFiManager->connect_async(wifiName, wifiPwd, 
-				std::bind(&WIFISettingWind::_connSuccessFunc, setting_window), 
-				std::bind(&WIFISettingWind::_connFailFunc, setting_window))){
+            if(setting_window->_pWiFiManager->connect_async(wifiName, wifiPwd, connCallback)){
                 setting_window->hind();
             }
         }
@@ -550,7 +600,7 @@ PLCDeviceName_("mc_plc"){
     lv_obj_set_style_text_font(btnmx, &lv_font_cn_songti_medium_21_media_cfg, 0);
     lv_obj_add_event_cb(btnmx, setting_btnmatrix_event_cb, LV_EVENT_VALUE_CHANGED, this);
 
-	readPLCConfigFile(CONFIG_PLC_ADDRESS_FILE, PLCIP);
+	readPLCConfigFile(PLCIP);
 	lv_textarea_set_text(plc_ip, PLCIP.c_str());
 
     hind();
@@ -572,56 +622,34 @@ void LinkSettingWind::show(){
 
 bool LinkSettingWind::plc_connect(){
     std::string ipstr = lv_textarea_get_text(plc_ip);
+    static PLCConnectListener connCallback_(this);
     if(ipstr.length() > 0){
         DeviceDescribe describe;
 		describe.deviceName = PLCDeviceName_;
 		describe.protoType = PROTOCOL_TYPE_MC;
 		describe.ipAddr = ipstr;
 		describe.port = 5551;
-		if(gTaskManager.registerDevice(describe)){
+		if(gTaskManager.connectDevice(describe, connCallback_)){
 			PLCIP.assign(ipstr);
-			SuccessCallback_();
-			writePLCConfigFile(CONFIG_PLC_ADDRESS_FILE);
-			gTaskManager.run();
+			writePLCConfigFile(ipstr);
 			return true;
 		}
-		FailCallback_();
 		return false;
     }
 }
 
-void LinkSettingWind::readPLCConfigFile(const std::string & path,
-										std::string & plcIP)
-{
-	std::string readstr;
-	cJSON* jsoncfg;
-	int ret = file_read(path, readstr);
-	if(!ret){
-		return;
-	}
-	printf("read file: %s\n", readstr.c_str());
-	jsoncfg = cJSON_Parse(readstr.c_str());
-	if(jsoncfg == NULL){
-		return;
-	}
-	else{
-		if(!cJSON_HasObjectItem(jsoncfg, "ipaddr")){
-			cJSON_Delete(jsoncfg);
-			return;
-		}
-		plcIP.assign(cJSON_GetObjectItem(jsoncfg, "ipaddr")->valuestring);
-	}
-	cJSON_Delete(jsoncfg);
+void LinkSettingWind::connSuccessFunc(){
+    SuccessCallback_();
+    gTaskManager.run();
+}
+void LinkSettingWind::connFailFunc(){
+    FailCallback_();
+    gTaskManager.stop();
 }
 
-void LinkSettingWind::writePLCConfigFile(const std::string & path){
-	cJSON* plccfg = cJSON_CreateObject();
-	cJSON_AddStringToObject(plccfg, "ipaddr", PLCIP.c_str());
-	std::string jsonstr(cJSON_Print(plccfg));
-	LOG_DEBUG << "write " << CONFIG_PLC_ADDRESS_FILE << ": " << jsonstr;
-
-	file_write(CONFIG_PLC_ADDRESS_FILE, jsonstr);
-	cJSON_Delete(plccfg);
+void LinkSettingWind::connLostFunc(){
+    FailCallback_();
+    gTaskManager.stop();
 }
 
 void LinkSettingWind::setting_btnmatrix_event_cb(lv_event_t* e){
@@ -725,6 +753,7 @@ _pAccessContrl(AccessContrl::getInstance()){
     ui->user_dropdown = lv_dropdown_create(ui->content_box);
     lv_obj_set_width(ui->user_dropdown, lv_pct(70));
     lv_dropdown_set_options(ui->user_dropdown, "操作员\n管理员");
+    lv_dropdown_set_symbol(ui->user_dropdown, &down_20x20);
 
     ui->password_textarea = lv_textarea_create(ui->content_box);
     lv_obj_set_width(ui->password_textarea, lv_pct(70));
@@ -787,7 +816,7 @@ void LoggingWind::btnmatrix_event_cb(lv_event_t* e){
                 }
                 else{
                     std::string msg("密码错误！");
-                    pWindow->_messageWind.create_error_wind(msg);
+                    pWindow->_messageWind.error_wind(msg);
                 }
             }
         }
@@ -1070,7 +1099,7 @@ void ModifyPasswordWind::btnmatrix_event_cb(lv_event_t* e){
             std::string pwd = lv_textarea_get_text(pWindow->ui->opassword_textarea);
             if(opassword != pwd){
                 std::string message = "原密码错误！";
-                pWindow->_messageWind.create_error_wind(message);
+                pWindow->_messageWind.error_wind(message);
                 return;
             }
             else{
@@ -1078,7 +1107,7 @@ void ModifyPasswordWind::btnmatrix_event_cb(lv_event_t* e){
                 std::string cpwd = lv_textarea_get_text(pWindow->ui->cpassword_textarea);
                 if(cpwd != npwd){
                     std::string message = "密码不一致！";
-                    pWindow->_messageWind.create_error_wind(message);
+                    pWindow->_messageWind.error_wind(message);
                     return;
                 }
                 else{
@@ -1089,7 +1118,7 @@ void ModifyPasswordWind::btnmatrix_event_cb(lv_event_t* e){
                     else{
                         message.assign("密码修改失败！");
                     }
-                    pWindow->_messageWind.create_info_wind(message);
+                    pWindow->_messageWind.info_wind(message);
                     //pWindow->_pParentWind->delete_modify_password_wind();
                     pWindow->hide();
                 }

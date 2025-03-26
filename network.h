@@ -204,37 +204,43 @@ typedef struct{
 	bool write(const std::string & path);
 }wpa_supplicant_info;
 
+
+class WIFIConnectionCallbackABS{
+public:
+	virtual void on_success(){};
+	virtual void on_failed(){};
+};
+
 class WifiManager: public NetworkManager{
 public:
 	typedef struct _WifiInfo_t{
 		std::string wifiName;
 	} WifiInfo_t;
 
-	typedef std::function<void(void)> ConnectStateCallback_t;
-
 private:
 	std::vector<WifiInfo_t> _wifi_info;
 	wpa_supplicant_info _wpa_info;
-	ConnectStateCallback_t _s_cb;
-	ConnectStateCallback_t _f_cb;
+	WIFIConnectionCallbackABS* pConnectionCallback_;
 	pthread_t _connect_pid;
 public:
 	WifiManager() = delete;
 	WifiManager(const std::string & ifaceName);
 	~WifiManager();
 	bool prepared();
-	bool connect_async();
 	bool connect();
-	bool connect_async(const std::string & wifiName, 
-					const std::string & wifiPassword, 
-					ConnectStateCallback_t s_cb,
-					ConnectStateCallback_t f_cb);
 	bool connect(const std::string & wifiName, 
 				const std::string & wifiPassword,
-				ConnectStateCallback_t s_cb,
-				ConnectStateCallback_t f_cb);
+				WIFIConnectionCallbackABS & callback);
+	bool connect_async();
+	bool connect_async(const std::string & wifiName, 
+					const std::string & wifiPassword);
+	bool connect_async(const std::string & wifiName, 
+					const std::string & wifiPassword, 
+					WIFIConnectionCallbackABS & callback);
 	std::vector<WifiInfo_t>* getWifiInfo(){return &_wifi_info;};
 	void wifi_scan();
+
+	void set_callback(WIFIConnectionCallbackABS & callback){pConnectionCallback_ = &callback;};
 
 	virtual void fetch_network_param_daemo();
 	virtual void fetch_network_param_stop();

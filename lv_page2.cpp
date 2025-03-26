@@ -3,6 +3,8 @@
 #include "Format.h"
 #include "limlog.h"
 
+WorkRecordCtx gWorkRecordCtx;
+
 LV_FONT_DECLARE(lv_font_cn_songti_bold_25);
 LV_FONT_DECLARE(lv_font_cn_songti_medium_21);
 LV_FONT_DECLARE(lv_font_cn_songti_medium_21_media_cfg);
@@ -84,7 +86,7 @@ UIPage2::UIPage2(lv_obj_t* parent)
     lv_obj_set_style_pad_bottom(ui->screen_1_work_record, 10, LV_PART_ITEMS | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(ui->screen_1_work_record, 10, LV_PART_ITEMS | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(ui->screen_1_work_record, 10, LV_PART_ITEMS | LV_STATE_DEFAULT);
-    ui->table_row = 31;
+    ui->table_row = 30;
     lv_table_set_row_cnt(ui->screen_1_work_record, ui->table_row);
 
     /* button widget */
@@ -102,10 +104,13 @@ UIPage2::UIPage2(lv_obj_t* parent)
     lv_obj_set_style_pad_all(ui->btnmx, 0, 0);
     lv_obj_set_scrollbar_mode(ui->btnmx, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_size(ui->btnmx, lv_pct(100), lv_pct(100));
-    lv_obj_set_style_text_font(ui->btnmx, &lv_font_cn_songti_medium_21_media_cfg, 0);
+    lv_obj_set_style_text_font(ui->btnmx, &lv_font_cn_songti_medium_21, 0);
     //lv_obj_add_event_cb(btnmx, setting_btnmatrix_event_cb, LV_EVENT_VALUE_CHANGED, this);
 
     events_init_screen();
+
+    gWorkRecordCtx.pUIPage2 = this;
+
     //连接数据库
     _pDatabase.connect();
     //加载表
@@ -134,8 +139,16 @@ bool UIPage2::insert_record(const std::string & timestamp,
     std::string insert_sql_fmt = "INSERT INTO work_record VALUES({0}, {1}, {2}, {3}, {4}, {5});";
     std::string insert_sql = util::Format(insert_sql_fmt, timestamp, 
                                         arg1, arg2, arg3, arg4, arg5);
+    std::string checksize_sql = "DELETE FROM work_record "      \
+                                "WHERE timestamp = ( "          \
+                                    "SELECT timestamp "         \
+                                    "FROM work_record "         \
+                                    "ORDER BY timestamp ASC "   \
+                                    "LIMIT 1 "                  \
+                                ") "                            \
+                                "AND (SELECT COUNT(*) FROM work_record) > 2000";
     _workRecordList.push_front(WorkRecordItem{timestamp, arg1, arg2, arg3, arg4, arg5});
-    if(_workRecordList.size() > 30){
+    if(_workRecordList.size() > ui->table_row){
         _workRecordList.pop_back();
     }
     //创建数据库表
@@ -143,6 +156,9 @@ bool UIPage2::insert_record(const std::string & timestamp,
     if(!ret) return ret;
     //插入数据
     ret = _pDatabase.excute(insert_sql, resp);
+    if(!ret) return ret;
+    //检查大小
+    ret = _pDatabase.excute(checksize_sql, resp);
     if(!ret) return ret;
     //更新表
     update_table();
@@ -165,6 +181,7 @@ bool UIPage2::load_first_table_record(){
             _workRecordList.push_back(item);
         }
     }
+    lv_obj_scroll_to(ui->screen_1_background_tile_4, 0, 0, LV_ANIM_OFF);
     return true;
 }
 
@@ -187,6 +204,7 @@ bool UIPage2::load_next_table_record(){
             _workRecordList.push_back(item);
         }
     }
+    lv_obj_scroll_to(ui->screen_1_background_tile_4, 0, 0, LV_ANIM_OFF);
     return true;
 }
 
@@ -200,7 +218,7 @@ bool UIPage2::load_previous_table_record(){
     std::string sql = util::Format(sql_fmt, item.timestamp);
     bool ret = _pDatabase.excute(sql, resp);
     if(!ret) return ret;
-    if(_workRecordList.size() > 0){
+    if(resp.size() > 0){
         _workRecordList.clear();
         for(auto iter = resp.begin(); iter != resp.end(); iter++){
             WorkRecordItem item{iter->at("timestamp"), iter->at("arg1"),
@@ -209,13 +227,15 @@ bool UIPage2::load_previous_table_record(){
             _workRecordList.push_back(item);
         }
     }
+    lv_obj_scroll_to(ui->screen_1_background_tile_4, 0, 0, LV_ANIM_OFF);
     return true;
 }
 
 
 void UIPage2::update_table(){
     std::stringstream ss;
-    for(int row = 1; row < _workRecordList.size()&&row < ui->table_row; row++){
+    int row;
+    for(row = 0; row < _workRecordList.size()&&row < ui->table_row; row++){
         //序号
         ss.str("");
         ss << (row);
@@ -247,6 +267,16 @@ void UIPage2::update_table(){
         ss.str("");
         ss << std::next(_workRecordList.begin(), row)->arg5;
         lv_table_set_cell_value(ui->screen_1_work_record, row, 6, ss.str().c_str());
+    }
+
+    for(; row < ui->table_row; row++){
+        lv_table_set_cell_value(ui->screen_1_work_record, row, 0, "");
+        lv_table_set_cell_value(ui->screen_1_work_record, row, 1, "");
+        lv_table_set_cell_value(ui->screen_1_work_record, row, 2, "");
+        lv_table_set_cell_value(ui->screen_1_work_record, row, 3, "");
+        lv_table_set_cell_value(ui->screen_1_work_record, row, 4, "");
+        lv_table_set_cell_value(ui->screen_1_work_record, row, 5, "");
+        lv_table_set_cell_value(ui->screen_1_work_record, row, 6, "");
     }
     lv_obj_align_to(ui->button_widget, ui->screen_1_work_record, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 }

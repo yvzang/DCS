@@ -65,6 +65,7 @@ private:
     static void btn_model_menu_event_cb(lv_event_t* e);
 	static void dropdown_event_cb(lv_event_t* e);
     void switch_model(model_t model);
+    void workRecord();
 };
 
 

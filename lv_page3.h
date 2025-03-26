@@ -5,6 +5,8 @@
 #include "database.h"
 #include "lvgl/lvgl.h"
 
+class DefaultRecorderCtx;
+
 class UIPage3{
 public:
     typedef struct{
@@ -23,6 +25,7 @@ private:
     lv_ui* ui;
     std::list<FaultRecordItem> _faultRecordList;
     Database _pDatabase;
+
     static void btn_event_cb(lv_event_t* e);
 public:
     static UIPage3* getInstance(lv_obj_t* parent);
@@ -36,5 +39,11 @@ public:
     void update_table();
 };
 
+
+class DefaultRecorderCtx{
+public:
+    UIPage3* pUIPage3;
+
+};
 
 #endif

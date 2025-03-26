@@ -276,24 +276,18 @@ bool Camera::probe(){
 	return (nRet < 0)?false:true;
 }
 
-void Camera::camera_connect_async(Camera_Callback_t conn_cb, 
-								Camera_Callback_t success_cb, 
-								Camera_Callback_t fail_cb, void* data){
-	_c_cb = conn_cb;
-	_s_cb = success_cb;
-	_f_cb = fail_cb;
-	_user_data = data;
+void Camera::camera_connect_async(CameraConnectionCallbackABS & callback){
+	pConnectionCallback_ = &callback;
 	_cameraState = CAMERA_STATE_LOADING;
-	_c_cb(_user_data);
+	pConnectionCallback_->on_connecting();
 	pthread_create(&_conn_pid, NULL, Camera::camera_connect_thread, this);
 	pthread_detach(_conn_pid);
 }
 
 void Camera::camera_connect_async(){
 	_cameraState = CAMERA_STATE_LOADING;
-	if(_c_cb){
-		_c_cb(_user_data);
-	}
+	if(pConnectionCallback_)
+		pConnectionCallback_->on_connecting();
 	pthread_create(&_conn_pid, NULL, Camera::camera_connect_thread, this);
 	pthread_detach(_conn_pid);
 }
@@ -307,16 +301,16 @@ void* Camera::camera_connect_thread(void* args){
 	usleep(10000);
 	if(camera->probe()){
 		camera->_cameraState = CAMERA_STATE_PLAYING;
-		if(camera->_s_cb){
-			camera->_s_cb(camera->_user_data);
+		if(camera->pConnectionCallback_){
+			camera->pConnectionCallback_->on_success();
 			usleep(500);
 		}
 		camera->camera_start();
 	}
 	else{
 		camera->_cameraState = CAMERA_STATE_NO;
-		if(camera->_f_cb){
-			camera->_f_cb(camera->_user_data);
+		if(camera->pConnectionCallback_){
+			camera->pConnectionCallback_->on_failed();
 		}
 	}
 	pthread_exit(NULL);

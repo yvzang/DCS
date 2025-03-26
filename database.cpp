@@ -6,7 +6,6 @@ int Database::research_callback(void* data, int argc, char** argv, char** colNam
 	SQL_Row row;
 	for(int i = 0; i < argc; i++){
 		//row.insert(colName[i], argv[i]);
-		LOG_DEBUG << "research data: " << colName[i] << " = " << argv[i];
 		row[colName[i]] = argv[i];
 	}
 	resp->push_back(row);

@@ -14,32 +14,43 @@ typedef struct{
 	std::vector<DataBlockTaskCallback> arrayTempSuccessCallback;
 } DataBlockTask;
 
+
+class ActionListener{
+public:
+	virtual void on_success() = 0;
+	virtual void on_fail() = 0;
+};
+
+class ConnectionActionListener: public ActionListener{
+public:
+	virtual void connect_lost() = 0;
+};
+
+
 class TaskManagerImpl{
 protected:
 	std::atomic<bool> Stop_;
+	std::atomic<bool> IsConnected_;
 	std::thread CoreThread_;
 	std::list<std::shared_ptr<DeviceTask>> PermenentTasks_;
 	std::list<std::shared_ptr<DeviceTask>> TempTasks_;
 
 	DeviceManager deviceManager_;
+	DeviceDescribe deviceDescribe_;
+
+	ConnectionActionListener* pDeviceStatusCallback_;
 public:
 	TaskManagerImpl();
 	~TaskManagerImpl();
-    bool registerDevice(DeviceDescribe describe);
-    void unregisterDevice(DeviceNameType id);
+    bool connectDevice(DeviceDescribe describe, ConnectionActionListener & callback);
+    void disconnectDevice();
+	bool isConnected(){return IsConnected_.load();};
 	void registerPermenentTask(std::shared_ptr<DeviceTask> task);
 	void registerTempTask(std::shared_ptr<DeviceTask> task);
 	bool run();
 	void stop();
 private:
 	void coreThreadFunc_();
-};
-
-class TaskListenerAction{
-public:
-	virtual void on_success(std::shared_ptr<DataBlockTask> pTask){};
-	virtual void on_fail(std::shared_ptr<DataBlockTask> pTask){};
-	virtual void connect_lost(std::shared_ptr<DataBlockTask> pTask){};
 };
 
 class TaskManager : public TaskManagerImpl{
@@ -54,9 +65,9 @@ public:
 									PLCAddress_t addrType,
 									const std::string & addrStart,
 									size_t size);
-	void registerUIFlashTask(const std::string & addrStart,
+	void registerDataArriveAction(const std::string & addrStart,
 							UITaskCallback cbk);
-	void registerOnceUIFlashTask(const std::string & addrStart,
+	void registerDataArriveOnce(const std::string & addrStart,
 							UITaskCallback cbk);
 	void fetchPLCValue(const std::string & addrStart,
 							UITaskCallback cbk);

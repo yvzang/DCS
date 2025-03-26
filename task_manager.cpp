@@ -6,6 +6,7 @@ extern pthread_mutex_t lv_lock;
 
 TaskManagerImpl::TaskManagerImpl(){
 	this->Stop_.store(true);
+	this->IsConnected_.store(false);
 }
 
 TaskManagerImpl::~TaskManagerImpl(){
@@ -29,12 +30,25 @@ void TaskManagerImpl::stop(){
 	deviceManager_.stop();
 }
 
-bool TaskManagerImpl::registerDevice(DeviceDescribe describe){
-	return deviceManager_.registerDevice(describe);
+bool TaskManagerImpl::connectDevice(DeviceDescribe describe,
+									ConnectionActionListener & callback){
+	if(IsConnected_.load()) return false;
+	deviceDescribe_ = describe;
+	pDeviceStatusCallback_ = &callback;
+	if(deviceManager_.registerDevice(describe)){
+		IsConnected_.store(true);
+		pDeviceStatusCallback_->on_success();
+		return true;
+	}
+	IsConnected_.store(false);
+	pDeviceStatusCallback_->on_fail();
+	return false;
 }
 
-void TaskManagerImpl::unregisterDevice(DeviceNameType id){
-	return deviceManager_.unregisterDevice(id);
+void TaskManagerImpl::disconnectDevice(){
+	IsConnected_.store(false);
+	deviceManager_.unregisterDevice(this->deviceDescribe_.deviceName);
+	pDeviceStatusCallback_->on_fail();
 }
 
 void TaskManagerImpl::registerPermenentTask(std::shared_ptr<DeviceTask> task){
@@ -99,11 +113,11 @@ void TaskManager::readDatablockSuccessFunc_(std::shared_ptr<DataBlockTask> pTask
 void TaskManager::readDatablockFailFunc_(std::shared_ptr<DataBlockTask> pTask){
 	std::cout << "Read datablock [" <<
 				pTask->pDeviceTask->address << "] error.";
-	if(connectionLostCallback_)
-		connectionLostCallback_();
+	IsConnected_.store(false);
+	pDeviceStatusCallback_->on_fail();
 }
 
-void TaskManager::registerUIFlashTask(const std::string & addrStart,
+void TaskManager::registerDataArriveAction(const std::string & addrStart,
 							UITaskCallback cbk)
 {
 	for(auto & taskIter : DataBlockTasks_){
@@ -114,7 +128,7 @@ void TaskManager::registerUIFlashTask(const std::string & addrStart,
 	}
 }
 
-void TaskManager::registerOnceUIFlashTask(const std::string & addrStart,
+void TaskManager::registerDataArriveOnce(const std::string & addrStart,
 							UITaskCallback cbk)
 {
 	for(auto & taskIter : DataBlockTasks_){

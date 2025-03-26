@@ -5,6 +5,9 @@
 #include "setting.h"
 #include "lv_UITopPage.h"
 #include "task_manager.h"
+#include "lv_message_window.h"
+#include "helper.h"
+#include "limlog.h"
 
 #define BATTRERY_ADC_FS "/sys/class/gpadc/data"
 
@@ -112,8 +115,8 @@ pModifyPasswordWind_(ModifyPasswordWind::getInstance()){
         std::bind(&UITopPage::keyxPress_cb, this, 7),
         std::bind(&UITopPage::keyxRelease_cb, this, 7)};
     opa.key8_cb = keyboard_cb_t{
-        std::bind(&UITopPage::loggingKeyPress_cb, this),
-        std::bind(&UITopPage::loggingKeyRelease_cb, this)};
+        std::bind(&UITopPage::keyxPress_cb, this, 8),
+        std::bind(&UITopPage::keyxRelease_cb, this, 8)};
     opa.key9_cb = keyboard_cb_t{
         std::bind(&UITopPage::keyxPress_cb, this, 9),
         std::bind(&UITopPage::keyxRelease_cb, this, 9)};
@@ -133,8 +136,8 @@ pModifyPasswordWind_(ModifyPasswordWind::getInstance()){
         std::bind(&UITopPage::keyxPress_cb, this, 14),
         std::bind(&UITopPage::keyxRelease_cb, this, 14)};
     opa.key15_cb = keyboard_cb_t{
-        std::bind(&UITopPage::keyxPress_cb, this, 15),
-        std::bind(&UITopPage::keyxRelease_cb, this, 15)};
+        std::bind(&UITopPage::loggingKeyPress_cb, this),
+        std::bind(&UITopPage::loggingKeyRelease_cb, this)};
     opa.key16_cb = keyboard_cb_t{
         std::bind(&UITopPage::modifyPwdPress_cb, this),
         std::bind(&UITopPage::modifyPwdRelease_cb, this)};
@@ -179,8 +182,10 @@ pModifyPasswordWind_(ModifyPasswordWind::getInstance()){
     pUIPage4_ = std::make_shared<UIPage4>(page4_tile);
     pUIPage5_ = std::make_shared<UIPage5>(page5_tile);
 
+    setIdentity(pAccessContrl_->curent_identity());
     //access contrl callback
     pAccessContrl_->setCallback(std::bind(&UITopPage::setIdentity, this, std::placeholders::_1));
+
 }
 
 UITopPage::~UITopPage(){
@@ -190,13 +195,13 @@ UITopPage::~UITopPage(){
 void UITopPage::setIdentity(identity_t identity){
     if(identity == MANUPULATOR){
         lv_label_set_text(top_label, "用户：(操作员)");
-        pUIPage4_->set_disable(false);
-        pUIPage5_->set_disable(false);
+        pUIPage4_->set_disable(true);
+        pUIPage5_->set_disable(true);
     }
     else if(identity == MANAGER){
         lv_label_set_text(top_label, "用户：(管理员)");
-        pUIPage4_->set_disable(true);
-        pUIPage5_->set_disable(true);
+        pUIPage4_->set_disable(false);
+        pUIPage5_->set_disable(false);
     }
 }
 
@@ -321,13 +326,13 @@ void UITopPage::modifyPwdRelease_cb(){
     printf("modify password key released.\n");
 }
 void UITopPage::loggingKeyPress_cb(){
-    pPhyKeyboard_->keyboard_led_turn(8, true);
+    pPhyKeyboard_->keyboard_led_turn(15, true);
     pPhyKeyboard_->keyboard_led_update();
     printf("logging key pressed.\n");
     pLoggingWind_->show();
 }
 void UITopPage::loggingKeyRelease_cb(){
-    pPhyKeyboard_->keyboard_led_turn(8, false);
+    pPhyKeyboard_->keyboard_led_turn(15, false);
     pPhyKeyboard_->keyboard_led_update();
     printf("logging key released.\n");
 }

@@ -56,8 +56,8 @@ bool Identity::get_password(int id, std::string & password){
 bool Identity::modify_password(int id, const std::string & password){
 	char sql_str[64]{0};
 	SQL_Response resp;
-	std::string sql = "UPDATE "ACCOUNT_TABLE" SET password = %s WHERE id = %d";
-	sprintf(sql_str, sql.c_str(), id);
+	std::string sql = "UPDATE "ACCOUNT_TABLE" SET password = \'%s\' WHERE id = %d";
+	sprintf(sql_str, sql.c_str(), password.c_str(), id);
 	return database.excute(sql_str, resp);
 }
 

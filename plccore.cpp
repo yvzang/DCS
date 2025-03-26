@@ -16,7 +16,7 @@ DeviceManager::DeviceManager()
 :TaskMaxThreshHold_(TASKMAXTHRESHHOLD),
 TaskSize_(0)
 {
-
+    Stop_.store(true);
 }
 
 DeviceManager::~DeviceManager(){
@@ -103,9 +103,11 @@ bool DeviceManager::submitePLCTask(std::shared_ptr<DeviceTask> task){
 }
 
 void DeviceManager::run(){
-    this->Stop_.store(false);
-    this->CoreThread_ = std::thread(std::bind(&DeviceManager::coreThreadFunc_, this));
-    this->CoreThread_.detach();
+    if(this->Stop_.load() == true){
+        this->Stop_.store(false);
+        this->CoreThread_ = std::thread(std::bind(&DeviceManager::coreThreadFunc_, this));
+        this->CoreThread_.detach();
+    }
 }
 
 void DeviceManager::stop(){

@@ -1,6 +1,27 @@
 #include <utils.h>
 #include <unistd.h>
 
+uint32_t str2uint32(const std::string strValue){
+	uint32_t result;
+	try{
+		result = std::stoul(strValue);
+	}
+	catch(std::invalid_argument & e){
+		result = 0;
+	}
+	return result;
+}
+float str2float(const std::string & strValue){
+	uint32_t result;
+	try{
+		result = std::stof(strValue);
+	}
+	catch(std::invalid_argument & e){
+		result = 0;
+	}
+	return result;
+}
+
 bool file_read(const std::string & path, std::string & str){
 	if(access(path.c_str(), F_OK) != 0){
 		return false;

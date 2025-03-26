@@ -5,6 +5,8 @@
 #include "database.h"
 #include "lvgl/lvgl.h"
 
+class WorkRecordCtx;
+
 class UIPage2{
 public:
     struct WorkRecordItem{
@@ -42,6 +44,11 @@ public:
     bool load_next_table_record();
     bool load_previous_table_record();
     void update_table();
+};
+
+class WorkRecordCtx{
+public:
+    UIPage2* pUIPage2;
 };
 
 

@@ -710,11 +710,13 @@ void* connection_thread(void* args){
 	if(manager->prepared()){
 		LOG_INFO << "wifi connect success! Lunching dhcp...";
 		SYSTEMCMD("udhcpc -i %s", INTER_WLAN);
-		manager->_s_cb();
+		if(manager->pConnectionCallback_)
+			manager->pConnectionCallback_->on_success();
 	}
 	else{
 		LOG_INFO << "wifi connect failed!";
-		manager->_f_cb();
+		if(manager->pConnectionCallback_)
+			manager->pConnectionCallback_->on_failed();
 	}
 	
 }
@@ -736,7 +738,7 @@ WifiManager::~WifiManager(){
 
 bool WifiManager::prepared(){
 	uint16_t intervals = 2;
-	uint16_t times = 6;
+	uint16_t times = 8;
 	for(; times > 0; times--){
 		if(this->isRunning() && this->running){
 			if(system("udhcpc -i wlan0 -n") == 0){
@@ -784,34 +786,39 @@ bool WifiManager::connect(){
 	if(this->prepared()){
 		LOG_INFO << "wifi connect success! Lunching dhcp...";
 		//SYSTEMCMD("udhcpc -i %s", INTER_WLAN);
-		_s_cb();
+		pConnectionCallback_->on_success();
 		return true;
 	}
 	LOG_INFO << "wifi connect failed!";
-	_f_cb();
+	if(pConnectionCallback_)
+		pConnectionCallback_->on_failed();
 	return false;
 }
 
 bool WifiManager::connect_async(const std::string & wifiName, 
-							const std::string & wifiPassword, 
-							ConnectStateCallback_t s_cb,
-							ConnectStateCallback_t f_cb){
+							const std::string & wifiPassword){
 	_wpa_info.wifiName = wifiName;
 	_wpa_info.wifiPassword = wifiPassword;
 	_wpa_info.write(WPA_CONFIG_PATH);
-	_s_cb = s_cb;
-	_f_cb = f_cb; 
+	return this->connect_async();
+}
+
+bool WifiManager::connect_async(const std::string & wifiName, 
+							const std::string & wifiPassword, 
+							WIFIConnectionCallbackABS & callback){
+	_wpa_info.wifiName = wifiName;
+	_wpa_info.wifiPassword = wifiPassword;
+	_wpa_info.write(WPA_CONFIG_PATH);
+	pConnectionCallback_ = &callback;
 	return this->connect_async();
 }
 
 bool WifiManager::connect(const std::string & wifiName, 
 							const std::string & wifiPassword,
-							ConnectStateCallback_t s_cb,
-							ConnectStateCallback_t f_cb){
+							WIFIConnectionCallbackABS & callback){
 	_wpa_info.wifiName = wifiName;
 	_wpa_info.wifiPassword = wifiPassword;
-	_s_cb = s_cb;
-	_f_cb = f_cb;
+	pConnectionCallback_ = &callback;
 	_wpa_info.write(WPA_CONFIG_PATH);
 	return this->connect();
 }

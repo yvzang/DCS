@@ -12,6 +12,9 @@ std::string toString(const T & any){
 	return ss.str();
 }
 
+uint32_t str2uint32(const std::string strValue);
+float str2float(const std::string & strValue);
+
 bool file_read(const std::string & path, std::string & str);
 bool file_write(const std::string & path, const std::string & str);
 

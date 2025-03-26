@@ -6,7 +6,9 @@
 #include <memory>
 #include <map>
 #include <atomic>
+#include "lvgl/lvgl.h"
 #include "serial.h"
+#include "task_manager.h"
 
 #define KEYBOARD_LED_ROW				6
 #define KEYBOARD_LED_COL				4
@@ -68,6 +70,8 @@ private:
 	keyboard_cb_t keyboard_callback(int index);
 	~PhyKeyboard();
 	friend void* physical_keyboard_listen_thread(void* args);
+
+	void setLED(DataPayload* payload);
 };
 
 class VirtualKeyboard{
@@ -99,6 +103,18 @@ public:
 
 private:
 	std::map<void*, void*> CallbackList_;
+};
+
+class EmergencyStopKey{
+private:
+	std::string gpioPin_;
+	int gpioNumber_;
+public:
+	EmergencyStopKey();
+	~EmergencyStopKey();
+	bool emergencyStopPressed();
+
+	static EmergencyStopKey* getInstance();
 };
 
 #endif

@@ -4,6 +4,7 @@
 #include "lv_uiparampage.h"
 #include "keyboard.h"
 
+
 class UIPage4: public UIParamPageABC{
 private:
     typedef struct
@@ -64,7 +65,6 @@ private:
         lv_obj_t* screen_label_29;
     }lv_ui;
     lv_ui* ui;
-    
 public:
 	UIPage4(lv_obj_t* parent);
 
@@ -99,6 +99,5 @@ public:
 private:
 	virtual void setValue(void* target);
 };
-
 
 #endif

@@ -2,12 +2,14 @@
 #include "utils.h"
 #include "task_manager.h"
 #include "lv_page1.h"
+#include "lv_page2.h"
 #include "limlog.h"
 
 LV_FONT_DECLARE(lv_font_cn_songti_bold_25);
 LV_FONT_DECLARE(lv_font_cn_songti_medium_21);
 LV_IMG_DECLARE(down_20x20);
 
+extern WorkRecordCtx gWorkRecordCtx;
 extern TaskManager gTaskManager;
 
 void ui_init_style(lv_style_t* style)
@@ -527,14 +529,14 @@ UIPage1::UIPage1(lv_obj_t* pParent)
 
     event_init_screen();
 
-	gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage1::getValue0, this, std::placeholders::_1));
-	gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage1::getValue1, this, std::placeholders::_1));
-	gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage1::getValue2_0, this, std::placeholders::_1));
-	gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage1::getValue2_1, this, std::placeholders::_1));
-	gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage1::getValue3_0, this, std::placeholders::_1));
-	gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage1::getValue3_1, this, std::placeholders::_1));
-	gTaskManager.registerOnceUIFlashTask("D140", std::bind(&UIPage1::getValue4, this, std::placeholders::_1));
-	gTaskManager.registerOnceUIFlashTask("D140", std::bind(&UIPage1::getValue5, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage1::getValue0, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage1::getValue1, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage1::getValue2_0, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage1::getValue2_1, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage1::getValue3_0, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage1::getValue3_1, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveOnce("D140", std::bind(&UIPage1::getValue4, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveOnce("D140", std::bind(&UIPage1::getValue5, this, std::placeholders::_1));
 }
 
 UIPage1::~UIPage1(){
@@ -691,15 +693,19 @@ void UIPage1::setValue3_1(){
 void UIPage1::setValue(void* target){
 	if(target == ui->screen_1_ta_27){
 		setValue2_0();
+        workRecord();
 	}
 	else if(target == ui->screen_1_ta_29){
 		setValue2_1();
+        workRecord();
 	}
 	else if(target == ui->screen_1_ta_28){
 		setValue3_0();
+        workRecord();
 	}
 	else if(target == ui->screen_1_ta_30){
 		setValue3_1();
+        workRecord();
 	}
 }
 
@@ -743,4 +749,13 @@ void UIPage1::switch_model(model_t model){
         lv_obj_set_style_bg_color(ui->screen_1_btn_2, lv_color_hex(0x2195f6), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(ui->screen_1_btn_1, lv_color_hex(0xbbbbbb), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
+}
+
+void UIPage1::workRecord(){
+    gWorkRecordCtx.pUIPage2->insert_record(toString(static_cast<uint32_t>(time(NULL))),
+                                        lv_textarea_get_text(ui->screen_1_ta_27),
+                                        lv_textarea_get_text(ui->screen_1_ta_28),
+                                        lv_textarea_get_text(ui->screen_1_ta_30),
+                                        lv_textarea_get_text(ui->screen_1_ta_29),
+                                        lv_textarea_get_text(ui->screen_1_ta_27));
 }

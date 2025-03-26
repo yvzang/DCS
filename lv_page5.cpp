@@ -1725,22 +1725,22 @@ UIPage5::UIPage5(lv_obj_t* parent){
     //set_disable(true);
     //Update current screen layout.
 
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue0_0, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue0_1, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue1_0, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue1_1, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue2_0, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue2_1, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue2_2, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue3_0, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue3_1, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue4_0, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue4_1, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue5_0, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue5_1, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue6_0, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue6_1, this, std::placeholders::_1));
-    gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue7, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue0_0, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue0_1, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue1_0, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue1_1, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue2_0, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue2_1, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue2_2, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue3_0, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue3_1, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue4_0, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue4_1, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue5_0, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue5_1, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue6_0, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue6_1, this, std::placeholders::_1));
+    gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue7, this, std::placeholders::_1));
 }
 
 void UIPage5::getValue0_0(DataPayload* payload){
@@ -1843,7 +1843,7 @@ void UIPage5::getValue7(DataPayload* payload){
 
 void UIPage5::setValue0_0(){
 	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_15);
-	float floatValue = std::stof(pStrValue);
+	float floatValue = str2float(pStrValue);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
 	task->addrType = PLC_ADDRESS_FLOAT;
@@ -1852,13 +1852,13 @@ void UIPage5::setValue0_0(){
 	task->address = "D1040";
 	task->payload = std::make_shared<DataPayload>();
 	task->payload->dfloat.push_back(floatValue);
-	task->PLCTaskSuccessCallback = std::bind([&](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue0_0, this, std::placeholders::_1));});
+	task->PLCTaskSuccessCallback = std::bind([&](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue0_0, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
 void UIPage5::setValue0_1(){
 	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_16);
-	float floatValue = std::stof(pStrValue);
+	float floatValue = str2float(pStrValue);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
 	task->addrType = PLC_ADDRESS_FLOAT;
@@ -1867,13 +1867,13 @@ void UIPage5::setValue0_1(){
 	task->address = "D1038";
 	task->payload = std::make_shared<DataPayload>();
 	task->payload->dfloat.push_back(floatValue);
-	task->PLCTaskSuccessCallback = std::bind([&](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue0_1, this, std::placeholders::_1));});
+	task->PLCTaskSuccessCallback = std::bind([&](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue0_1, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
 void UIPage5::setValue1_0(){
 	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_13);
-	float floatValue = std::stof(pStrValue);
+	float floatValue = str2float(pStrValue);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
 	task->addrType = PLC_ADDRESS_FLOAT;
@@ -1882,13 +1882,13 @@ void UIPage5::setValue1_0(){
 	task->address = "D1042";
 	task->payload = std::make_shared<DataPayload>();
 	task->payload->dfloat.push_back(floatValue);
-	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue1_0, this, std::placeholders::_1));});
+	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue1_0, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
 void UIPage5::setValue1_1(){
 	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_17);
-	float floatValue = std::stof(pStrValue);
+	float floatValue = str2float(pStrValue);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
 	task->addrType = PLC_ADDRESS_UINT32;
@@ -1896,14 +1896,14 @@ void UIPage5::setValue1_1(){
 	task->size = 1;
 	task->address = "D1012";
 	task->payload = std::make_shared<DataPayload>();
-	task->payload->dfloat.push_back(floatValue);
-	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue1_1, this, std::placeholders::_1));});
+	task->payload->duint32.push_back(floatValue);
+	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue1_1, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
 void UIPage5::setValue2_0(){
 	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_18);
-	float floatValue = std::stof(pStrValue);
+	float floatValue = str2float(pStrValue);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
 	task->addrType = PLC_ADDRESS_FLOAT;
@@ -1912,13 +1912,13 @@ void UIPage5::setValue2_0(){
 	task->address = "D1044";
 	task->payload = std::make_shared<DataPayload>();
 	task->payload->dfloat.push_back(floatValue);
-	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue2_0, this, std::placeholders::_1));});
+	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue2_0, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
 void UIPage5::setValue2_1(){
-	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_11);
-	float floatValue = std::stof(pStrValue);
+	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_12);
+	uint32_t floatValue = str2uint32(pStrValue);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
 	task->addrType = PLC_ADDRESS_UINT32;
@@ -1926,14 +1926,15 @@ void UIPage5::setValue2_1(){
 	task->size = 1;
 	task->address = "D1014";
 	task->payload = std::make_shared<DataPayload>();
-	task->payload->dfloat.push_back(floatValue);
-	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue2_1, this, std::placeholders::_1));});
+	task->payload->duint32.push_back(floatValue);
+    LOG_DEBUG << "write D1014 " << floatValue;
+	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue2_1, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
 void UIPage5::setValue2_2(){
-	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_12);
-	float floatValue = std::stof(pStrValue);
+	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_11);
+	uint32_t floatValue = str2uint32(pStrValue);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
 	task->addrType = PLC_ADDRESS_UINT32;
@@ -1941,14 +1942,14 @@ void UIPage5::setValue2_2(){
 	task->size = 1;
 	task->address = "D1016";
 	task->payload = std::make_shared<DataPayload>();
-	task->payload->dfloat.push_back(floatValue);
-	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue2_2, this, std::placeholders::_1));});
+	task->payload->duint32.push_back(floatValue);
+	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue2_2, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
 void UIPage5::setValue3_0(){
 	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_21);
-	float floatValue = std::stof(pStrValue);
+	float floatValue = str2float(pStrValue);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
 	task->addrType = PLC_ADDRESS_FLOAT;
@@ -1957,13 +1958,13 @@ void UIPage5::setValue3_0(){
 	task->address = "D1046";
 	task->payload = std::make_shared<DataPayload>();
 	task->payload->dfloat.push_back(floatValue);
-	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue3_0, this, std::placeholders::_1));});
+	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue3_0, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
 void UIPage5::setValue3_1(){
 	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_23);
-	float floatValue = std::stof(pStrValue);
+	float floatValue = str2float(pStrValue);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
 	task->addrType = PLC_ADDRESS_FLOAT;
@@ -1972,13 +1973,13 @@ void UIPage5::setValue3_1(){
 	task->address = "D1018";
 	task->payload = std::make_shared<DataPayload>();
 	task->payload->dfloat.push_back(floatValue);
-	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue3_1, this, std::placeholders::_1));});
+	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue3_1, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
 void UIPage5::setValue4_0(){
 	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_22);
-	float floatValue = std::stof(pStrValue);
+	float floatValue = str2float(pStrValue);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
 	task->addrType = PLC_ADDRESS_FLOAT;
@@ -1987,13 +1988,13 @@ void UIPage5::setValue4_0(){
 	task->address = "D1048";
 	task->payload = std::make_shared<DataPayload>();
 	task->payload->dfloat.push_back(floatValue);
-	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue4_0, this, std::placeholders::_1));});
+	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue4_0, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
 void UIPage5::setValue4_1(){
 	auto pStrValue = lv_textarea_get_text(ui->screen_1_ta_24);
-	float floatValue = std::stof(pStrValue);
+	float floatValue = str2float(pStrValue);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
 	task->addrType = PLC_ADDRESS_FLOAT;
@@ -2002,7 +2003,7 @@ void UIPage5::setValue4_1(){
 	task->address = "D1020";
 	task->payload = std::make_shared<DataPayload>();
 	task->payload->dfloat.push_back(floatValue);
-	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue4_1, this, std::placeholders::_1));});
+	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue4_1, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
@@ -2012,17 +2013,17 @@ void UIPage5::setValue5_0(){
 void UIPage5::setValue5_1(){
 	auto pStrValueLow = lv_textarea_get_text(ui->screen_1_ta_5);
     auto pStrValueHeight = lv_textarea_get_text(ui->screen_1_ta_4);
-	ushort ValueLow = std::stoul(pStrValueLow);
-    ushort ValueHeight = std::stoul(pStrValueHeight);
+	ushort ValueLow = str2uint32(pStrValueLow);
+    ushort ValueHeight = str2uint32(pStrValueHeight);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
-	task->addrType = PLC_ADDRESS_FLOAT;
+	task->addrType = PLC_ADDRESS_UINT32;
 	task->rw = PLC_ACCESS_WRITE;
 	task->size = 1;
 	task->address = "D1053";
 	task->payload = std::make_shared<DataPayload>();
-	task->payload->dfloat.push_back((uint32)ValueHeight << 16 | ValueLow);
-	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue5_1, this, std::placeholders::_1));});
+	task->payload->duint32.push_back((uint32)ValueHeight << 16 | ValueLow);
+	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue5_1, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
@@ -2032,17 +2033,17 @@ void UIPage5::setValue6_0(){
 void UIPage5::setValue6_1(){
 	auto pStrValueLow = lv_textarea_get_text(ui->screen_1_ta_5);
     auto pStrValueHeight = lv_textarea_get_text(ui->screen_1_ta_4);
-	ushort ValueLow = std::stoul(pStrValueLow);
-    ushort ValueHeight = std::stoul(pStrValueHeight);
+	ushort ValueLow = str2uint32(pStrValueLow);
+    ushort ValueHeight = str2uint32(pStrValueHeight);
 	auto task = std::make_shared<DeviceTask>();
 	task->deviceID = CONFIG_PLC_DEVICE_ID;
-	task->addrType = PLC_ADDRESS_FLOAT;
+	task->addrType = PLC_ADDRESS_UINT32;
 	task->rw = PLC_ACCESS_WRITE;
 	task->size = 1;
 	task->address = "D1053";
 	task->payload = std::make_shared<DataPayload>();
-	task->payload->dfloat.push_back((uint32)ValueHeight << 16 | ValueLow);
-	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerOnceUIFlashTask("D1000", std::bind(&UIPage5::getValue6_1, this, std::placeholders::_1));});
+	task->payload->duint32.push_back((uint32)ValueHeight << 16 | ValueLow);
+	task->PLCTaskSuccessCallback = std::bind([=](){gTaskManager.registerDataArriveOnce("D1000", std::bind(&UIPage5::getValue6_1, this, std::placeholders::_1));});
 	task->PLCTaskFailedCallback = std::bind([=](){});
 	gTaskManager.registerTempTask(task);
 }
@@ -2125,10 +2126,10 @@ void UIPage5::setValue(void* target){
     else if(target == ui->screen_1_ta_18){
         setValue2_0();
     }
-    else if(target == ui->screen_1_ta_12){
+    else if(target == ui->screen_1_ta_11){
         setValue2_1();
     }
-    else if(target == ui->screen_1_ta_11){
+    else if(target == ui->screen_1_ta_12){
         setValue2_2();
     }
     else if(target == ui->screen_1_ta_21){

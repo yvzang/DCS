@@ -7,6 +7,8 @@ LV_FONT_DECLARE(lv_font_cn_songti_bold_25);
 LV_FONT_DECLARE(lv_font_cn_songti_medium_21);
 LV_FONT_DECLARE(lv_font_cn_songti_medium_21_media_cfg);
 
+DefaultRecorderCtx gDefaultRecorderCtx;
+
 UIPage3::UIPage3(lv_obj_t* parent)
 :_pDatabase(DATABASE_FILE){
     ui = new lv_ui;
@@ -110,7 +112,7 @@ UIPage3::UIPage3(lv_obj_t* parent)
     lv_obj_set_style_pad_bottom(ui->screen_1_fault_record, 10, LV_PART_ITEMS | LV_STATE_FOCUSED);
     lv_obj_set_style_pad_left(ui->screen_1_fault_record, 10, LV_PART_ITEMS | LV_STATE_FOCUSED);
     lv_obj_set_style_pad_right(ui->screen_1_fault_record, 10, LV_PART_ITEMS | LV_STATE_FOCUSED);
-    ui->table_row = 31;
+    ui->table_row = 30;
     lv_table_set_row_cnt(ui->screen_1_fault_record, ui->table_row);
 
     /* button widget */
@@ -128,10 +130,13 @@ UIPage3::UIPage3(lv_obj_t* parent)
     lv_obj_set_style_pad_all(ui->btnmx, 0, 0);
     lv_obj_set_scrollbar_mode(ui->btnmx, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_size(ui->btnmx, lv_pct(100), lv_pct(100));
-    lv_obj_set_style_text_font(ui->btnmx, &lv_font_cn_songti_medium_21_media_cfg, 0);
+    lv_obj_set_style_text_font(ui->btnmx, &lv_font_cn_songti_medium_21, 0);
     //lv_obj_add_event_cb(btnmx, setting_btnmatrix_event_cb, LV_EVENT_VALUE_CHANGED, this);
     
     events_init_screen();
+
+    gDefaultRecorderCtx.pUIPage3 = this;
+
     //连接数据库
     _pDatabase.connect();
     //加载表
@@ -149,10 +154,18 @@ bool UIPage3::insert_record(const std::string & timestamp,
     std::string create_table_sql = "CREATE TABLE IF NOT EXISTS fault_record(\n"\
                                 "timestamp TIMESTAMP PRIMARY KEY,\n"\
                                 "event VARCHAR(50));";
-    std::string insert_sql_fmt = "INSERT INTO fault_record VALUES({0}, {1});";
+    std::string insert_sql_fmt = "INSERT INTO fault_record VALUES({0}, \"{1}\");";
+    std::string checksize_sql = "DELETE FROM fault_record "      \
+                                "WHERE timestamp = ( "          \
+                                    "SELECT timestamp "         \
+                                    "FROM fault_record "         \
+                                    "ORDER BY timestamp ASC "   \
+                                    "LIMIT 1 "                  \
+                                ") "                            \
+                                "AND (SELECT COUNT(*) FROM fault_record) > 1000";
     std::string insert_sql = util::Format(insert_sql_fmt, timestamp, event);
     _faultRecordList.push_front(FaultRecordItem{timestamp, event});
-    if(_faultRecordList.size() > 30){
+    if(_faultRecordList.size() > ui->table_row){
         _faultRecordList.pop_back();
     }
     //创建数据库表
@@ -161,7 +174,11 @@ bool UIPage3::insert_record(const std::string & timestamp,
     //插入数据
     ret = _pDatabase.excute(insert_sql, resp);
     if(!ret) return ret;
+    //检查大小
+    ret = _pDatabase.excute(checksize_sql, resp);
+    if(!ret) return ret;
     //更新表
+    load_first_table_record();
     update_table();
     return true;
 }
@@ -180,6 +197,7 @@ bool UIPage3::load_first_table_record(){
             _faultRecordList.push_back(item);
         }
     }
+    lv_obj_scroll_to(ui->screen_1_background_tile_5, 0, 0, LV_ANIM_OFF);
     return true;
 }
 
@@ -200,6 +218,7 @@ bool UIPage3::load_next_table_record(){
             _faultRecordList.push_back(item);
         }
     }
+    lv_obj_scroll_to(ui->screen_1_background_tile_5, 0, 0, LV_ANIM_OFF);
     return true;
 }
 
@@ -220,12 +239,14 @@ bool UIPage3::load_previous_table_record(){
             _faultRecordList.push_back(item);
         }
     }
+    lv_obj_scroll_to(ui->screen_1_background_tile_5, 0, 0, LV_ANIM_OFF);
     return true;
 }
 
 void UIPage3::update_table(){
     std::stringstream ss;
-    for(int row = 1; row < _faultRecordList.size()&&row < ui->table_row; row++){
+    int row;
+    for(row = 0; row < _faultRecordList.size()&&row < ui->table_row; row++){
         //序号
         ss.str("");
         ss << (row);
@@ -245,6 +266,12 @@ void UIPage3::update_table(){
         ss.str("");
         ss << std::next(_faultRecordList.begin(), row)->evenet;
         lv_table_set_cell_value(ui->screen_1_fault_record, row, 2, ss.str().c_str());
+    }
+
+    for(; row < ui->table_row; row++){
+        lv_table_set_cell_value(ui->screen_1_fault_record, row, 0, "");
+        lv_table_set_cell_value(ui->screen_1_fault_record, row, 1, "");
+        lv_table_set_cell_value(ui->screen_1_fault_record, row, 2, "");
     }
     lv_obj_align_to(ui->button_widget, ui->screen_1_fault_record, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 }

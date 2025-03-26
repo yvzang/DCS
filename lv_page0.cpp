@@ -5,8 +5,11 @@
 #include "lv_message_window.h"
 #include "task_manager.h"
 #include "setting.h"
+#include "lv_page3.h"
+#include "utils.h"
+#include "helper.h"
 
-
+extern DefaultRecorderCtx gDefaultRecorderCtx;
 extern pthread_mutex_t lv_lock;
 
 LV_FONT_DECLARE(lv_font_cn_songti_medium_21);
@@ -22,6 +25,62 @@ LV_IMG_DECLARE(green_point);
 LV_IMG_DECLARE(red_point);
 
 TaskManager gTaskManager;
+
+class CameraConnectionCallback : public CameraConnectionCallbackABS{
+private:
+    UIPage0* pUIPage0_;
+    int Index_;
+public:
+    CameraConnectionCallback(UIPage0* pUIpage, int index)
+    :pUIPage0_(pUIpage),
+    Index_(index){}
+	virtual void on_connecting(){
+        if(Index_ == 0)
+            pUIPage0_->cameraLeftImage(CAMERA_STATE_LOADING);
+        else
+            pUIPage0_->cameraRightImage(CAMERA_STATE_LOADING);
+    }
+	virtual void on_success(){
+        if(Index_ == 0)
+            pUIPage0_->cameraLeftImage(CAMERA_STATE_PLAYING);
+        else
+            pUIPage0_->cameraRightImage(CAMERA_STATE_PLAYING);
+    }
+	virtual void on_failed(){
+        if(Index_ == 0)
+            pUIPage0_->cameraLeftImage(CAMERA_STATE_NO);
+        else
+            pUIPage0_->cameraRightImage(CAMERA_STATE_NO);
+    }
+};
+
+
+class WIFIConnectionCallback : public WIFIConnectionCallbackABS{
+private:
+	UIPage0* pUIPage0_;
+    Camera* pCameraLeft_;
+    Camera* pCameraRight_;
+    std::shared_ptr<CameraConnectionCallback> pCameraLeftCallback_;
+    std::shared_ptr<CameraConnectionCallback> pCameraRightCallback_;
+public:
+	WIFIConnectionCallback(UIPage0 & page0,
+                            Camera* cameraLeft,
+                            Camera* cameraRight)
+    :pUIPage0_(&page0),
+    pCameraLeft_(cameraLeft),
+    pCameraRight_(cameraRight),
+    pCameraLeftCallback_(std::make_shared<CameraConnectionCallback>(&page0, 0)),
+    pCameraRightCallback_(std::make_shared<CameraConnectionCallback>(&page0, 1)){};
+	virtual void on_success(){
+        pUIPage0_->statusSwitch1_3(true);
+        pCameraLeft_->camera_connect_async(*pCameraLeftCallback_);
+        pCameraRight_->camera_connect_async(*pCameraRightCallback_);
+    };
+	virtual void on_failed(){
+        pUIPage0_->statusSwitch1_3(false);
+    };
+};
+
 
 UIPage0::UIPage0(lv_obj_t* pParent)
 :_pParent(pParent){
@@ -207,10 +266,11 @@ UIPage0::UIPage0(lv_obj_t* pParent)
 	pCameraRight_ = std::make_shared<Camera>(right_img_domain, "camera2");
 	pCameraSettingWindLeft_ = std::make_shared<CameraSettingWind>(pCameraLeft_.get());
 	pCameraSettingWindRight_ = std::make_shared<CameraSettingWind>(pCameraRight_.get());
-	//WIFI
-	pWIFISettingWind_ = std::make_shared<WIFISettingWind>(std::bind(&UIPage0::statusSwitch1_3, this, true),
-														std::bind(&UIPage0::statusSwitch1_3, this, false),
-														pCameraLeft_.get(), pCameraRight_.get());
+
+    //WIFI
+    static WIFIConnectionCallback pPage0WIFIConnCallback_(*this, pCameraLeft_.get(), pCameraRight_.get());
+	pWIFISettingWind_ = std::make_shared<WIFISettingWind>(pPage0WIFIConnCallback_,
+                                                        pCameraLeft_.get(), pCameraRight_.get());
 	//PLC
 	gTaskManager.setCallback(std::bind(&UIPage0::statusSwitch2_3, this, false));
 	pLinkSettingWind_ = std::make_shared<LinkSettingWind>(std::bind(&UIPage0::statusSwitch2_3, this, true),
@@ -219,19 +279,24 @@ UIPage0::UIPage0(lv_obj_t* pParent)
 	eventInitScreen();
 
 	//注册数据刷新事件
-	gTaskManager.registerUIFlashTask("M360", std::bind(&UIPage0::setValue0_0, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("D140", std::bind(&UIPage0::setValue1_0, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("D140", std::bind(&UIPage0::setValue1_1, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("D140", std::bind(&UIPage0::setValue1_2, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("D140", std::bind(&UIPage0::setValue2_0, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("D140", std::bind(&UIPage0::setValue2_1, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("D140", std::bind(&UIPage0::setValue2_2, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("D140", std::bind(&UIPage0::setValue3_0, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("M194", std::bind(&UIPage0::setValue3_1, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("M194", std::bind(&UIPage0::setValue3_2, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("D140", std::bind(&UIPage0::setValue4_0, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("M194", std::bind(&UIPage0::setValue4_1, this, std::placeholders::_1));
-	gTaskManager.registerUIFlashTask("M194", std::bind(&UIPage0::setValue4_2, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("M360", std::bind(&UIPage0::setValue0_0, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("D140", std::bind(&UIPage0::setValue1_0, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("D140", std::bind(&UIPage0::setValue1_1, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("D140", std::bind(&UIPage0::setValue1_2, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("D140", std::bind(&UIPage0::setValue2_0, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("D140", std::bind(&UIPage0::setValue2_1, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("D140", std::bind(&UIPage0::setValue2_2, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("D140", std::bind(&UIPage0::setValue3_0, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("M194", std::bind(&UIPage0::setValue3_1, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("M194", std::bind(&UIPage0::setValue3_2, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("D140", std::bind(&UIPage0::setValue4_0, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("M194", std::bind(&UIPage0::setValue4_1, this, std::placeholders::_1));
+	gTaskManager.registerDataArriveAction("M194", std::bind(&UIPage0::setValue4_2, this, std::placeholders::_1));
+
+    //连接WIFI
+    auto pWIFIManager_ = WifiManagerGetInstance();
+    pWIFIManager_->set_callback(pPage0WIFIConnCallback_);
+    pWIFIManager_->connect_async();
 }
 
 UIPage0::~UIPage0(){
@@ -239,7 +304,8 @@ UIPage0::~UIPage0(){
 }
 
 void UIPage0::setValue0_0(DataPayload* payload){
-	for(int i = 0; i < 24; i++){
+    static std::vector<bool> prePayload;
+	for(int i = 0; i < payload->dbool.size(); i++){
         if(payload->dbool[i]){
             int iAddr = 360 + i;
             std::stringstream ss;
@@ -248,6 +314,13 @@ void UIPage0::setValue0_0(DataPayload* payload){
             if(messageIter != FAULT_MESSAGE.end()){
                 auto message = messageIter->second;
                 lv_textarea_set_text(running_info, message.c_str());
+
+                // default record
+                if(prePayload.size() == 0 || prePayload[i] == 0 && payload->dbool[i] == 1){
+                    gDefaultRecorderCtx.pUIPage3->insert_record(toString(static_cast<uint32_t>(time(NULL))),
+                                                                message);
+                }
+                prePayload.assign(payload->dbool.begin(), payload->dbool.end());
             }
         }
     }
@@ -347,6 +420,38 @@ void UIPage0::statusSwitch2_2(bool status){
 }
 void UIPage0::statusSwitch2_3(bool status){
 	statusSwitch(row3_status_image_ptr_list[2], status);
+}
+
+void UIPage0::cameraLeftImage(CameraState state){
+    if(state == CAMERA_STATE_NO){
+        lv_img_set_src(left_img_domain, &no_camera_200x200);
+        lv_obj_set_size(left_img_domain, 200, 200);
+        lv_obj_align(left_img_domain, LV_ALIGN_CENTER, 0, 0);
+    }
+    else if(state == CAMERA_STATE_LOADING){
+        lv_img_set_src(left_img_domain, &loading_200x200);
+        lv_obj_set_size(left_img_domain, 200, 200);
+        lv_obj_align(left_img_domain, LV_ALIGN_CENTER, 0, 0);
+    }
+    else if(state == CAMERA_STATE_PLAYING){
+        lv_obj_set_size(left_img_domain, lv_pct(100), lv_pct(100));
+    }
+}
+
+void UIPage0::cameraRightImage(CameraState state){
+    if(state == CAMERA_STATE_NO){
+        lv_img_set_src(right_img_domain, &no_camera_200x200);
+        lv_obj_set_size(right_img_domain, 200, 200);
+        lv_obj_align(right_img_domain, LV_ALIGN_CENTER, 0, 0);
+    }
+    else if(state == CAMERA_STATE_LOADING){
+        lv_img_set_src(right_img_domain, &loading_200x200);
+        lv_obj_set_size(right_img_domain, 200, 200);
+        lv_obj_align(right_img_domain, LV_ALIGN_CENTER, 0, 0);
+    }
+    else if(state == CAMERA_STATE_PLAYING){
+        lv_obj_set_size(right_img_domain, lv_pct(100), lv_pct(100));
+    }
 }
 
 void UIPage0::eventInitScreen(){

@@ -6,7 +6,9 @@
 #include <string>
 #include <time.h>
 #include "limlog.h"
+#include "keyboard.h"
 #include "lv_UITopPage.h"
+#include "setting.h"
 extern "C"{
     #include "G2dApi.h"
     #include "sunxiMemInterface.h"
@@ -163,6 +165,21 @@ void registerPLCTask(){
     gTaskManager.registerReadDatablockTask("mc_plc",
                                         PLC_ADDRESS_BOOL,
                                         "M360", 24);
+    gTaskManager.registerReadDatablockTask("mc_plc",
+                                        PLC_ADDRESS_BOOL,
+                                        "M3000", 51);
+    // PLC heart
+	auto task = std::make_shared<DeviceTask>();
+	task->deviceID = CONFIG_PLC_DEVICE_ID;
+	task->addrType = PLC_ADDRESS_UINT32;
+	task->rw = PLC_ACCESS_WRITE;
+	task->size = 1;
+	task->address = "D160";
+	task->payload = std::make_shared<DataPayload>();
+	task->payload->duint32.push_back(1);
+	task->PLCTaskSuccessCallback = std::bind([](){});
+	task->PLCTaskFailedCallback = std::bind([](){});
+	gTaskManager.registerPermenentTask(task);
 }
 
 int main(void)
@@ -213,6 +230,8 @@ int main(void)
     UITopPage topPage;
     //plc_connecter_init("192.168.2.90", 5551);
 
+    EmergencyStopKey* pEStopKey = EmergencyStopKey::getInstance();
+
     int policy;
     sched_param main_sched_param;
     pthread_attr_init(&thread_attr);
@@ -221,6 +240,19 @@ int main(void)
     main_sched_param.sched_priority = sched_get_priority_max(policy);
     pthread_setschedparam(pthread_self(), policy, &main_sched_param);
     while(1) {
+        if(pEStopKey->emergencyStopPressed()){
+            auto task = std::make_shared<DeviceTask>();
+            task->deviceID = CONFIG_PLC_DEVICE_ID;
+            task->addrType = PLC_ADDRESS_BOOL;
+            task->rw = PLC_ACCESS_WRITE;
+            task->size = 1;
+            task->address = "M3021";
+            task->payload = std::make_shared<DataPayload>();
+            task->payload->dbool.push_back(false);
+            task->PLCTaskSuccessCallback = std::bind([=](){});
+            task->PLCTaskFailedCallback = std::bind([=](){});
+            gTaskManager.registerTempTask(task);
+        }
         pthread_mutex_lock(&lv_lock);
         //pMainWind->mainWind_value_update();
         lv_timer_handler();

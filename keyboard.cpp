@@ -1,9 +1,15 @@
 #include <functional>
+#include <fstream>
+#include <sstream>
 #include "lv_uiparampage.h"
 #include "lvgl/lvgl.h"
 #include "keyboard.h"
 #include "limlog.h"
+#include "utils.h"
 
+#define CONFIG_EMERGENCYSTOP_GPIO                   "PD13"
+
+extern TaskManager gTaskManager;
 
 PhyKeyboard* PhyKeyboard::pKeyboard = nullptr;
 
@@ -69,6 +75,8 @@ PhyKeyboard::PhyKeyboard(const keyboard_opa_t & opa)
 	readlen = this->serial.readData(readstr, 10000);
 	pthread_create(&listen_thread, NULL, physical_keyboard_listen_thread, this);
     pthread_detach(listen_thread);
+
+    gTaskManager.registerDataArriveAction("M3000", std::bind(&PhyKeyboard::setLED, this, std::placeholders::_1));
 }
 
 PhyKeyboard::~PhyKeyboard(){
@@ -112,6 +120,16 @@ keyboard_cb_t PhyKeyboard::keyboard_callback(int index){
 	}
 	ptr += index;
 	return *ptr;
+}
+
+void PhyKeyboard::setLED(DataPayload* payload){
+    for(int i = 0; i < payload->dbool.size() && i < 15; i++){
+        keyboard_led_turn(i, payload->dbool[30 + i]);
+    }
+    for(int i = 18; i < payload->dbool.size() && i < 21; i++){
+        keyboard_led_turn(i, payload->dbool[30 + i]);
+    }
+    keyboard_led_update();
 }
 
 PhyKeyboard* PhyKeyboard::getInstance(const keyboard_opa_t & opa){
@@ -276,4 +294,36 @@ void ParamKeyboard::keyboard_event_cb(lv_event_t* e){
         pPage->setValue((void*)keyboard->_target);
 		keyboard->hind();
     }
+}
+
+EmergencyStopKey::EmergencyStopKey()
+:gpioPin_(CONFIG_EMERGENCYSTOP_GPIO)
+{
+    std::string gpioNum(gpioPin_.begin() + 2, gpioPin_.end());
+    gpioNumber_ = (gpioPin_[1]-'A')*0x20 + std::strtol(gpioNum.c_str(), NULL, 10);
+
+    std::ofstream expordFile("/sys/class/gpio/export");
+    expordFile << gpioNumber_;
+    expordFile.close();
+
+    std::ofstream directionFile(std::string("/sys/class/gpio/gpio") + toString(gpioNumber_) + "/direction");
+    directionFile << "in";
+    directionFile.close();
+}
+
+EmergencyStopKey::~EmergencyStopKey(){
+
+}
+
+bool EmergencyStopKey::emergencyStopPressed(){
+    std::ifstream valueFile(std::string("/sys/class/gpio/gpio") + toString(gpioNumber_) + "/value");
+    char chValue;
+    valueFile.get(chValue);
+    valueFile.close();
+    return chValue == '1' ? 0 : 1;
+}
+
+EmergencyStopKey* EmergencyStopKey::getInstance(){
+    static EmergencyStopKey instance;
+    return &instance;
 }

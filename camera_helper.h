@@ -47,10 +47,14 @@ public:
 						int port);
 };
 
-class Camera{
+class CameraConnectionCallbackABS{
 public:
-	typedef std::function<void(void*)> Camera_Callback_t;
+	virtual void on_connecting() = 0;
+	virtual void on_success() = 0;
+	virtual void on_failed() = 0;
+};
 
+class Camera{
 private:
 	int state;
 	lv_obj_t* _showDomain;
@@ -63,17 +67,14 @@ private:
 public:
 	CameraState _cameraState;
 	camera_info info;
-	Camera_Callback_t _c_cb;
-	Camera_Callback_t _s_cb;
-	Camera_Callback_t _f_cb;
-	void* _user_data;
+	CameraConnectionCallbackABS* pConnectionCallback_;
 	Camera() = delete;
 	Camera(lv_obj_t* show_domain, const std::string & name);
 	bool probe();
 	void camera_start();
 	void camera_stop();
 	void camera_connect_async();
-	void camera_connect_async(Camera_Callback_t conn_cb, Camera_Callback_t success_cb, Camera_Callback_t fail_cb, void* data);
+	void camera_connect_async(CameraConnectionCallbackABS & callback);
 	void operator()(const std::string & account, 
 						const std::string & pwd, 
 						const std::string & ip_addr,

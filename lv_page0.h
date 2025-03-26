@@ -58,6 +58,9 @@ public:
 	void statusSwitch2_1(bool status);
 	void statusSwitch2_2(bool status);
 	void statusSwitch2_3(bool status);
+
+	void cameraLeftImage(CameraState state);
+	void cameraRightImage(CameraState state);
 private:
 	void statusSwitch(lv_obj_t* pImageOBJ, bool status);
 	void eventInitScreen();
